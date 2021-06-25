@@ -1,0 +1,10 @@
+sesame:
+  "00:11:22:33:44:55":
+    secret_key: THIS_IS_SECRET_KEY
+    public_key: THIS_IS_PUBLIC_KEY
+mqtt:
+  host: mqtt.example.com
+  port: 1883
+  username: mqtt
+  password: THIS_IS_VERY_SECRET
+  topic_prefix: pysesameos2

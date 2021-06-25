@@ -1,0 +1,44 @@
+site_name: pysesameos2
+site_url: https://pysesameos2.readthedocs.io/
+repo_url: https://github.com/mochipon/pysesameos2
+repo_name: pysesameos2
+strict: true
+extra_css:
+  - styles/override.css
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Modules: api.md
+  - Contributing: contributing.md
+theme:
+  name: material
+  language: en
+  palette:
+    scheme: slate
+    primary: teal
+    accent: purple
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.indexes
+    - navigation.tabs
+    - navigation.instant
+    - navigation.tabs.sticky
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.superfences
+  - toc:
+      baselevel: 2
+      permalink: true
+      slugify: !!python/name:pymdownx.slugs.uslugify
+  - meta
+plugins:
+  - include-markdown
+  - search:
+      lang: en
+  - mkdocstrings:
+      watch:
+        - pysesameos2

@@ -1,0 +1,3 @@
+paho-mqtt==1.5.1
+pysesameos2
+PyYAML==5.4.1
