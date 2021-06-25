@@ -6,7 +6,7 @@ _Unofficial Python Library to communicate with SESAME 3 series products via Blue
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pysesameos2)
 ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/mochipon/pysesameos2/dev%20workflow/main)
 [![Documentation Status](https://readthedocs.org/projects/pysesameos2/badge/?version=latest)](https://pysesameos2.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/mochipon/pysesameos2/branch/main/graph/badge.svg?token=TBD)](https://codecov.io/gh/mochipon/pysesameos2)
+[![codecov](https://codecov.io/gh/mochipon/pysesameos2/branch/main/graph/badge.svg?token=EOkDeLXeG2)](https://codecov.io/gh/mochipon/pysesameos2)
 ![PyPI - License](https://img.shields.io/pypi/l/pysesameos2)
 
 ## Introduction
