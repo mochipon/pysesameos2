@@ -28,12 +28,12 @@ To be honest, this is my first time to use [`Bleak`](https://github.com/hbldh/bl
 Please note that `pysesameos2` can only control [SESAME 3 Smart Lock](https://jp.candyhouse.co/products/sesame3) at this moment. Although all types of devices running Sesame OS2 are technically supportable, I don't actually have or need those devices. PRs are always welcome to help out!
 
 * Scan all SESAME locks using BLE advertisements.
-* Receive state changes (locked, handle position, etc.) that are proactively sent by the device.
+* Receive state changes (locked, handle position, etc.) that are actively reported from the device.
 * Needless to say, locking and unlocking!
 
 ## Consideration
 
-- The results of this project are merely from reverse engineering of the official SDK so you might run into some issues. Please do let me know if you find any problems!
+- The results of `pysesameos2` are merely from reverse engineering of [the official SDK](https://doc.candyhouse.co/). We have implemented just a small part of it, so you might run into some issues. Please do let me know if you find any problems!
 - `pysesameos2` only supports devices that have already been initially configured using the official app. That is, `pysesameos2` cannot configure the locking position of your device.
 - `pysesameos2` does not have, and will not have, any functionality related to the operation history of locks.  According to [the document](https://doc.candyhouse.co/ja/flow_charts#sesame-%E5%B1%A5%E6%AD%B4%E6%A9%9F%E8%83%BD), your lock's operation history is not stored in the lock itself, but on the cloud service. I personally recommend you to bring a Wi-Fi module to get the operation history uploaded and retrive it by [the API](https://doc.candyhouse.co/ja/SesameAPI#sesame%E3%81%AE%E5%B1%A5%E6%AD%B4%E3%82%92%E5%8F%96%E5%BE%97).
 
@@ -43,5 +43,5 @@ Please take a look at the [`example`](https://github.com/mochipon/pysesameos2/tr
 
 ## Credits & Thanks
 
-* A huge thank you to all who assisted with [CANDY HOUSE](https://jp.candyhouse.co/).
+* A huge thank you to all at [CANDY HOUSE](https://jp.candyhouse.co/).
 * Many thanks to [bleak](https://github.com/hbldh/bleak) and [pyzerproc](https://github.com/emlove/pyzerproc).

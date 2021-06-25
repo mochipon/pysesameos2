@@ -1,8 +1,10 @@
 _English follows Japanese._
 
-# MQTT - SESAME Bridge
+# MQTT - SESAME 3 Bridge
 
-このスクリプトは MQTT サーバと SESAME3 スマートロックの間をブリッジ接続します。[Home Assistant](https://www.home-assistant.io/) の [MQTT Lock](https://www.home-assistant.io/integrations/lock.mqtt/) を使うことで、鍵の状態をリアルタイムに把握したり、操作したりすることができます。
+このスクリプトは MQTT サーバと SESAME3 スマートロックの間をブリッジ接続します。
+
+[Home Assistant](https://www.home-assistant.io/) では [MQTT Lock](https://www.home-assistant.io/integrations/lock.mqtt/) を使うことで、鍵の状態をリアルタイムに把握したり、操作したりすることができます。
 
 ## ⚠️ 注意とおねがい
 
@@ -43,7 +45,8 @@ $ pip install -r requirements.txt
 
 ## スクリプトの利用方法
 
-1. `discover.py` を実行して、Bluetooth における UUID と SESAME デバイスの UUID (アプリに表示される UUID) の対応を取得します。
+1. `discover.py` を実行します
+    - Bluetooth における UUID と SESAME デバイスの UUID (公式アプリに表示される UUID) の対応を取得します
 
 ```console
 $ . venv/bin/activate
@@ -54,10 +57,11 @@ SESAME Device Identifier: 9F8867D5-4FEF-48CA-BF74-1620FF9006F1
 ==========
 ```
 
-2. 取得した情報を元にして `config.yml` を作成します。
-Bluetooth における UUID とそれに対応するデバイスの `secret_key`, `public_key` を紐付けます。
+2. 取得した情報を元にして `config.yml` を作成します
+    - Bluetooth における UUID とそれに対応するデバイスの `secret_key`, `public_key` を紐付けます
 
 3. `mqtt2sesame.py` を実行します
+    - `--verbose` オプションをつけると更に詳細なログが表示されます
 
 ## Home Assistant の設定例
 
@@ -74,7 +78,7 @@ lock:
 
 - - -
 
-# MQTT - SESAME Bridge
+# MQTT - SESAME 3 Bridge
 
 This program aims to retrieve and control the status of SESAME devices via MQTT. Compatible with [Home Assistant](https://www.home-assistant.io/)'s [MQTT Lock](https://www.home-assistant.io/integrations/lock.mqtt/) platform.
 
