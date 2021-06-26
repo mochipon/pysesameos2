@@ -293,6 +293,19 @@ class TestCHSesameLock:
             == "CHSesameLock(deviceUUID=42918AD1-8154-4AFF-BD1F-F0CDE88A8DE1, deviceModel=CHProductModel.SS2)"
         )
 
+    def test_CHSesameLock_key_raises_exception_on_invalid_value(self):
+        d = CHSesameLock()
+
+        with pytest.raises(TypeError):
+            d.setKey("INVALID-KEY")
+
+    def test_CHSesameLock_key(self):
+        d = CHSesameLock()
+        k = CHDeviceKey()
+
+        assert d.setKey(k) is None
+        assert d.getKey() == k
+
 
 class TestCHDeviceKey:
     def test_CHDeviceKey_secretKey_raises_exception_on_invalid_value(self):

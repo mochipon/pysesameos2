@@ -217,6 +217,17 @@ class CHDevices:
 
         self._deviceStatus_callback = callback
 
+    def setKey(self, key: CHDeviceKey) -> None:
+        """Set a key object for a device.
+
+        Args:
+            key (CHDeviceKey): The key object for the device.
+        """
+        if not isinstance(key, CHDeviceKey):
+            raise TypeError("Invalid key")
+
+        self._key = key
+
     async def wait_for_login(self):
         return await self._login_event.wait()
 
