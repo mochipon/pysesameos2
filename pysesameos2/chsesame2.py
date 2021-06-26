@@ -400,4 +400,4 @@ class CHSesame2(CHSesameLock):
         Returns:
             str: The string representation of the object.
         """
-        return f"CHSesame2(deviceUUID={self.getDeviceUUID()}, deviceModel={self.productModel}, sesame2PublicKey={self.getSesame2PublicKey()}, mechStatus={self.getMechStatus()})"
+        return f"CHSesame2(deviceUUID={self.getDeviceUUID()}, deviceModel={self.productModel}, mechStatus={self.getMechStatus()})"
