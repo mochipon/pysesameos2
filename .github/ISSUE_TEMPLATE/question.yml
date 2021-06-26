@@ -1,0 +1,40 @@
+name: General inquiry - 一般的な質問
+description: Request for further information - ライブラリの利用方法に関する質問
+title: "[Question]: "
+labels: "question"
+
+body:
+  - type: textarea
+    attributes:
+      label: Describe the question you have - 質問の内容
+      description: >-
+        A clear and concise description of what you want to ask.
+        質問したい内容について簡潔に説明してください。
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context - その他
+      description: >-
+        Add any other context or screenshots about the question here.
+        質問の背景や試したことがあれば共有してください。
+
+  - type: input
+    attributes:
+      label: Pysesameos2 version (`pip show pysesameos2`)
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Python version (`python --version`)
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: OS
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: BlueZ version (`bluetoothctl -v`) in case of Linux
