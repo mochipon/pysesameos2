@@ -92,9 +92,9 @@ class TestCHSesame2MechStatus:
         )
 
     def test_CHSesame2MechStatus_rawdata_lowpower(self):
-        status = CHSesame2MechStatus(rawdata="48030080f3ff0002")
-        assert status.getBatteryPrecentage() == 78
-        assert status.getBatteryVoltage() == 5.912023460410557
+        status = CHSesame2MechStatus(rawdata="30030080f3ff0002")
+        assert status.getBatteryPrecentage() == 44
+        assert status.getBatteryVoltage() == 5.743108504398827
 
         status2 = CHSesame2MechStatus(rawdata="48020080f3ff0002")
         assert status2.getBatteryPrecentage() == 0

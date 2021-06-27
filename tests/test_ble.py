@@ -301,7 +301,7 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return None
+            return []
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -316,22 +316,56 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return bleak.backends.device.BLEDevice(
-                "AA:BB:CC:11:22:33",
-                "INVALID_NAME",
-                uuids=[
-                    "0000fd81-0000-1000-8000-00805f9b34fb",
-                ],
-                rssi=-60,
-                manufacturer_data={1370: b"\x00\x00\x01"},
-            )
+            return [
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:11:22:33",
+                    "INVALID_NAME",
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x00\x00\x01"},
+                ),
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:44:55:66",
+                    None,
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x00\x00\x01"},
+                ),
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:77:88:99",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                ),
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:AA:BB:CC",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x02\x00\x01"},
+                ),
+            ]
 
         bleak_scanner.discover.side_effect = _scan
 
         with pytest.raises(ValueError):
             await CHBleManager().scan_by_address("AA:BB:CC:11:22:33")
 
-        bleak_scanner.discover.assert_called_once()
+        with pytest.raises(ValueError):
+            await CHBleManager().scan_by_address("AA:BB:CC:44:55:66")
+
+        with pytest.raises(ValueError):
+            await CHBleManager().scan_by_address("AA:BB:CC:77:88:99")
+
+        with pytest.raises(ValueError):
+            await CHBleManager().scan_by_address("AA:BB:CC:AA:BB:CC")
+
+        assert bleak_scanner.discover.call_count == 4
 
     @pytest.mark.asyncio
     async def test_CHBleManager_scan_by_address_returns_None_on_non_supported_device(
@@ -339,15 +373,17 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return bleak.backends.device.BLEDevice(
-                "AA:BB:CC:11:22:33",
-                "QpGK0YFUSv+9H/DN6IqN4Q",
-                uuids=[
-                    "0000fd81-0000-1000-8000-00805f9b34fb",
-                ],
-                rssi=-60,
-                manufacturer_data={1370: b"\x02\x00\x01"},
-            )
+            return [
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:11:22:33",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x02\x00\x01"},
+                )
+            ]
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -360,15 +396,17 @@ class TestCHBleManager:
     async def test_CHBleManager_scan_by_address(self, bleak_scanner):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return bleak.backends.device.BLEDevice(
-                "AA:BB:CC:11:22:33",
-                "QpGK0YFUSv+9H/DN6IqN4Q",
-                uuids=[
-                    "0000fd81-0000-1000-8000-00805f9b34fb",
-                ],
-                rssi=-60,
-                manufacturer_data={1370: b"\x00\x00\x01"},
-            )
+            return [
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:11:22:33",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x00\x00\x01"},
+                )
+            ]
 
         bleak_scanner.discover.side_effect = _scan
 

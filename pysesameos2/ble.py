@@ -385,7 +385,11 @@ class CHBleManager:
 
         # `BLEDevice.metadata` should return device specific details in OS-agnostically way.
         # https://bleak.readthedocs.io/en/latest/api.html#bleak.backends.device.BLEDevice.metadata
-        if dev.metadata is None or "uuids" not in dev.metadata:
+        if (
+            dev.metadata is None
+            or "uuids" not in dev.metadata
+            or "manufacturer_data" not in dev.metadata
+        ):
             raise ValueError("Failed to find the device metadata")
 
         if SERVICE_UUID in dev.metadata["uuids"]:
@@ -415,9 +419,6 @@ class CHBleManager:
             devices = await asyncio.wait_for(
                 bleak.BleakScanner.discover(), scan_duration
             )
-
-            if isinstance(devices, BLEDevice):
-                devices = [devices]
 
             for device in devices:
                 obj = self.device_factory(device)
@@ -461,18 +462,14 @@ class CHBleManager:
                 bleak.BleakScanner.discover(), scan_duration
             )
 
-            device = None
-            if isinstance(devices, BLEDevice) or devices is None:
-                device = devices
-            else:
-                device = next(
-                    (
-                        d
-                        for d in devices
-                        if d.address.lower() == ble_device_identifier.lower()
-                    ),
-                    None,
-                )
+            device = next(
+                (
+                    d
+                    for d in devices
+                    if d.address.lower() == ble_device_identifier.lower()
+                ),
+                None,
+            )
             if device is None:
                 raise ConnectionRefusedError("Scan completed: the device not found")
 
