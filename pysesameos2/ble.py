@@ -416,9 +416,6 @@ class CHBleManager:
                 bleak.BleakScanner.discover(), scan_duration
             )
 
-            if isinstance(devices, BLEDevice):
-                devices = [devices]
-
             for device in devices:
                 obj = self.device_factory(device)
                 if obj is not None:
@@ -461,18 +458,14 @@ class CHBleManager:
                 bleak.BleakScanner.discover(), scan_duration
             )
 
-            device = None
-            if isinstance(devices, BLEDevice) or devices is None:
-                device = devices
-            else:
-                device = next(
-                    (
-                        d
-                        for d in devices
-                        if d.address.lower() == ble_device_identifier.lower()
-                    ),
-                    None,
-                )
+            device = next(
+                (
+                    d
+                    for d in devices
+                    if d.address.lower() == ble_device_identifier.lower()
+                ),
+                None,
+            )
             if device is None:
                 raise ConnectionRefusedError("Scan completed: the device not found")
 
