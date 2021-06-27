@@ -385,7 +385,11 @@ class CHBleManager:
 
         # `BLEDevice.metadata` should return device specific details in OS-agnostically way.
         # https://bleak.readthedocs.io/en/latest/api.html#bleak.backends.device.BLEDevice.metadata
-        if dev.metadata is None or "uuids" not in dev.metadata:
+        if (
+            dev.metadata is None
+            or "uuids" not in dev.metadata
+            or "manufacturer_data" not in dev.metadata
+        ):
             raise ValueError("Failed to find the device metadata")
 
         if SERVICE_UUID in dev.metadata["uuids"]:
