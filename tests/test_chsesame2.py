@@ -2,7 +2,6 @@
 
 """Tests for `pysesameos2` package."""
 
-import bleak
 import pytest
 
 from pysesameos2.ble import CHBleManager, CHSesame2BleReceiver, CHSesame2BleTransmiter

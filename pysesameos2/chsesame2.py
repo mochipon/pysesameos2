@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
-import bleak
+from bleak import BleakClient
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import algorithms
 
@@ -139,7 +139,7 @@ class CHSesame2(CHSesameLock):
             raise RuntimeError("BLE advertisement from the device is not received.")
 
         logger.debug("Connect to the device...")
-        self._client = bleak.BleakClient(adv.getDevice())
+        self._client = BleakClient(adv.getDevice())
         self.setDeviceStatus(CHSesame2Status.BleConnecting)
         ret = await self._client.connect()
         if not ret:

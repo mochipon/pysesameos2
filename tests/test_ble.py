@@ -2,10 +2,12 @@
 
 """Tests for `pysesameos2` package."""
 
+import sys
 import uuid
 
-import bleak
 import pytest
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakError
 
 from pysesameos2.ble import (
     BLEAdvertisement,
@@ -30,6 +32,17 @@ from pysesameos2.helper import (
     CHSesame2MechSettings,
     CHSesame2MechStatus,
 )
+
+if sys.version_info[:2] < (3, 8):
+    from asynctest import patch
+else:
+    from unittest.mock import patch
+
+
+@pytest.fixture
+def bleak_scanner():
+    with patch("pysesameos2.ble.BleakScanner") as scanner:
+        yield scanner
 
 
 class TestCHSesame2BleTransmiter:
@@ -186,11 +199,7 @@ class TestBLEAdvertisement:
             BLEAdvertisement()
 
         with pytest.raises(TypeError):
-            BLEAdvertisement(
-                bleak.backends.device.BLEDevice(
-                    "AA:BB:CC:11:22:33", "QpGK0YFUSv+9H/DN6IqN4Q"
-                )
-            )
+            BLEAdvertisement(BLEDevice("AA:BB:CC:11:22:33", "QpGK0YFUSv+9H/DN6IqN4Q"))
 
     def test_BLEAdvertisement_raises_exception_on_invalid_arguments(self):
         with pytest.raises(TypeError):
@@ -198,14 +207,12 @@ class TestBLEAdvertisement:
 
         with pytest.raises(TypeError):
             BLEAdvertisement(
-                bleak.backends.device.BLEDevice(
-                    "AA:BB:CC:11:22:33", "QpGK0YFUSv+9H/DN6IqN4Q"
-                ),
+                BLEDevice("AA:BB:CC:11:22:33", "QpGK0YFUSv+9H/DN6IqN4Q"),
                 "INVALID",
             )
 
     def test_BLEAdvertisement(self):
-        d = bleak.backends.device.BLEDevice(
+        d = BLEDevice(
             "AA:BB:CC:11:22:33",
             "QpGK0YFUSv+9H/DN6IqN4Q",
             uuids=[
@@ -234,7 +241,7 @@ class TestCHBleManager:
             CHBleManager().device_factory("INVALID-DATA")
 
     def test_CHBleManager_device_factory_not_supported_device(self):
-        bled = bleak.backends.device.BLEDevice(
+        bled = BLEDevice(
             "AA:BB:CC:11:22:33",
             "QpGK0YFUSv+9H/DN6IqN4Q",
             uuids=[
@@ -248,7 +255,7 @@ class TestCHBleManager:
             assert CHBleManager().device_factory(bled)
 
     def test_CHBleManager_device_factory(self):
-        bled = bleak.backends.device.BLEDevice(
+        bled = BLEDevice(
             "AA:BB:CC:11:22:33",
             "QpGK0YFUSv+9H/DN6IqN4Q",
             uuids=[
@@ -266,7 +273,7 @@ class TestCHBleManager:
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
             return [
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:11:22:33",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -275,7 +282,7 @@ class TestCHBleManager:
                     rssi=-60,
                     manufacturer_data={1370: b"\x02\x00\x01"},
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:44:55:66",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -295,7 +302,7 @@ class TestCHBleManager:
     @pytest.mark.asyncio
     async def test_CHBleManager_scan_pass_BleakError_exception(self, bleak_scanner):
         async def raise_exception(*args, **kwargs):
-            raise bleak.exc.BleakError("TEST")
+            raise BleakError("TEST")
 
         bleak_scanner.discover.side_effect = raise_exception
 
@@ -309,7 +316,7 @@ class TestCHBleManager:
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
             return [
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:11:22:33",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -318,7 +325,7 @@ class TestCHBleManager:
                     rssi=-60,
                     manufacturer_data={1370: b"\x00\x00\x01"},
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:44:55:66",
                     "Em09ZpIiTlq83gxmKdSNQw",
                     uuids=[
@@ -361,7 +368,7 @@ class TestCHBleManager:
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
             return [
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:11:22:33",
                     "INVALID_NAME",
                     uuids=[
@@ -370,7 +377,7 @@ class TestCHBleManager:
                     rssi=-60,
                     manufacturer_data={1370: b"\x00\x00\x01"},
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:44:55:66",
                     None,
                     uuids=[
@@ -379,7 +386,7 @@ class TestCHBleManager:
                     rssi=-60,
                     manufacturer_data={1370: b"\x00\x00\x01"},
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:77:88:99",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -387,13 +394,13 @@ class TestCHBleManager:
                     ],
                     rssi=-60,
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:AA:BB:CC",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     rssi=-60,
                     manufacturer_data={1370: b"\x02\x00\x01"},
                 ),
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:DD:EE:FF",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -430,7 +437,7 @@ class TestCHBleManager:
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
             return [
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:11:22:33",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[
@@ -453,7 +460,7 @@ class TestCHBleManager:
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
             return [
-                bleak.backends.device.BLEDevice(
+                BLEDevice(
                     "AA:BB:CC:11:22:33",
                     "QpGK0YFUSv+9H/DN6IqN4Q",
                     uuids=[

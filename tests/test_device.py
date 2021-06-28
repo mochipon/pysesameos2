@@ -5,8 +5,8 @@
 import asyncio
 import uuid
 
-import bleak
 import pytest
+from bleak.backends.device import BLEDevice
 
 from pysesameos2.ble import BLEAdvertisement
 from pysesameos2.const import CHSesame2Intention, CHSesame2Status
@@ -17,7 +17,7 @@ from pysesameos2.helper import CHProductModel
 
 @pytest.fixture(autouse=True)
 def ble_advertisement():
-    bledevice = bleak.backends.device.BLEDevice(
+    bledevice = BLEDevice(
         "AA:BB:CC:11:22:33",
         "QpGK0YFUSv+9H/DN6IqN4Q",
         uuids=[
@@ -34,7 +34,7 @@ def ble_advertisement():
 
 @pytest.fixture(autouse=True)
 def ble_advertisement_not_registed_device():
-    bledevice = bleak.backends.device.BLEDevice(
+    bledevice = BLEDevice(
         "AA:BB:CC:11:22:33",
         "QpGK0YFUSv+9H/DN6IqN4Q",
         uuids=[

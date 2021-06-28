@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, Optional, Tuple, Union
 
-import bleak
+from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
@@ -418,9 +418,7 @@ class CHBleManager:
         logger.info("Starting scan for SESAME devices...")
         ret = {}
         try:
-            devices = await asyncio.wait_for(
-                bleak.BleakScanner.discover(), scan_duration
-            )
+            devices = await asyncio.wait_for(BleakScanner.discover(), scan_duration)
 
             for device in devices:
                 try:
@@ -456,8 +454,8 @@ class CHBleManager:
             "Starting scan for the SESAME device ({})...".format(ble_device_identifier)
         )
 
-        # We do use `bleak.BleakScanner.discover` instead of
-        # `bleak.BleakScanner.find_device_by_address`.
+        # We do use `BleakScanner.discover` instead of
+        # `BleakScanner.find_device_by_address`.
         #
         # The problem is, the reposence (`BLEDevice`) of `find_device_by_address` does not
         # contain a proper `matadata` which is heavily utilized in `device_factory`.
@@ -467,7 +465,7 @@ class CHBleManager:
         # https://github.com/hbldh/bleak/blob/55a2d34cc96bb842be278485794806704caa2d2c/bleak/backends/scanner.py#L101
         # https://github.com/hbldh/bleak/blob/ce63ed4d92430f154ce33ab812e313961b26f7a4/bleak/backends/bluezdbus/scanner.py#L213-L237
 
-        devices = await asyncio.wait_for(bleak.BleakScanner.discover(), scan_duration)
+        devices = await asyncio.wait_for(BleakScanner.discover(), scan_duration)
 
         device = next(
             (d for d in devices if d.address.lower() == ble_device_identifier.lower()),
