@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import asyncio
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import bleak
 from cryptography.hazmat.primitives import cmac
@@ -49,24 +47,24 @@ class CHSesame2(CHSesameLock):
         """SESAME3 Device Specific Implementation."""
         super().__init__()
         self._rxBuffer = CHSesame2BleReceiver()
-        self._txBuffer = None
-        self._mechStatus = None
-        self._mechSetting = None
-        self._intention = None
+        self._txBuffer: Optional[CHSesame2BleTransmiter] = None
+        self._mechStatus: Optional[CHSesame2MechStatus] = None
+        self._mechSetting: Optional[CHSesame2MechSettings] = None
+        self._intention = CHSesame2Intention.idle
 
     def getRxBuffer(self) -> CHSesame2BleReceiver:
         return self._rxBuffer
 
-    def setRxBuffer(self, ble_rx: CHSesame2BleReceiver):
+    def setRxBuffer(self, ble_rx: CHSesame2BleReceiver) -> None:
         self._rxBuffer = ble_rx
 
-    def getTxBuffer(self) -> CHSesame2BleTransmiter:
+    def getTxBuffer(self) -> Optional[CHSesame2BleTransmiter]:
         return self._txBuffer
 
-    def setTxBuffer(self, ble_tx: CHSesame2BleTransmiter):
+    def setTxBuffer(self, ble_tx: CHSesame2BleTransmiter) -> None:
         self._txBuffer = ble_tx
 
-    def getMechStatus(self) -> CHSesame2MechStatus:
+    def getMechStatus(self) -> Optional[CHSesame2MechStatus]:
         """Return a mechanical status of a device.
 
         Returns:
@@ -98,7 +96,7 @@ class CHSesame2(CHSesameLock):
             elif status.getTarget() == setting.getUnlockPosition():
                 self.setIntention(CHSesame2Intention.unlocking)
 
-    def getMechSetting(self) -> CHSesame2MechSettings:
+    def getMechSetting(self) -> Optional[CHSesame2MechSettings]:
         """Return mechanical settings of a device
 
         Returns:
@@ -106,7 +104,7 @@ class CHSesame2(CHSesameLock):
         """
         return self._mechSetting
 
-    def setMechSetting(self, setting: CHSesame2MechSettings):
+    def setMechSetting(self, setting: CHSesame2MechSettings) -> None:
         """Set mechanical settings of a device
 
         Args:
@@ -135,9 +133,13 @@ class CHSesame2(CHSesameLock):
         logger.debug(f"setIntention: {intent}")
         self._intention = intent
 
-    async def connect(self):
+    async def connect(self) -> None:
+        adv = self.getAdvertisement()
+        if not adv:
+            raise RuntimeError("BLE advertisement from the device is not received.")
+
         logger.debug("Connect to the device...")
-        self._client = bleak.BleakClient(self.getAdvertisement().getDevice())
+        self._client = bleak.BleakClient(adv.getDevice())
         self.setDeviceStatus(CHSesame2Status.BleConnecting)
         ret = await self._client.connect()
         if not ret:
@@ -155,7 +157,7 @@ class CHSesame2(CHSesameLock):
                 )
                 logger.debug("Found RX/TX characteristics.")
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         try:
             logger.info(f"Disconnecting from the device: {self.getDeviceUUID()}")
             self.setDeviceStatus(CHSesame2Status.NoBleSignal)
@@ -206,19 +208,26 @@ class CHSesame2(CHSesameLock):
             self.setTxBuffer(CHSesame2BleTransmiter(is_cipher, payload_full))
             await self.transmit()
 
-    async def loginSesame(self):
+    async def loginSesame(self) -> None:
+        if self.getSesameToken() is None:
+            raise RuntimeError("SesameToken is not received.")
+
         logging.debug(f"Login to the device: {self.getDeviceUUID()}")
         self.setDeviceStatus(CHSesame2Status.BleLogining)
 
         remote_keys = self.getKey()
-        local_keys = AppKeyFactory.get_instance()
-
         sesame_sk = remote_keys.getSecretKey()
         sesame_keyindex = remote_keys.getKeyIndex()
         sesame_pk = remote_keys.getSesame2PublicKey()
-        local_pk = local_keys.getPubkey()
+        sesame_token = self.getSesameToken()
+        if not sesame_sk or not sesame_keyindex or not sesame_pk or not sesame_token:
+            raise RuntimeError("Missing parameters from the device for login process.")
 
-        tokens = local_keys.getAppToken() + self.getSesameToken()
+        local_keys = AppKeyFactory.get_instance()
+        local_pk = local_keys.getPubkey()
+        local_token = local_keys.getAppToken()
+
+        tokens = local_token + sesame_token
 
         c = cmac.CMAC(algorithms.AES(sesame_sk))
         c.update(sesame_keyindex + local_pk + tokens)
@@ -237,7 +246,7 @@ class CHSesame2(CHSesameLock):
             BleCommunicationType.plaintext,
         )
 
-    def onConnectionStateChange(self, _: BaseBleakClient):
+    def onConnectionStateChange(self, _: "BaseBleakClient") -> None:
         logger.debug("onConnectionStateChange")
         self.setAdvertisement(None)
 
@@ -258,6 +267,8 @@ class CHSesame2(CHSesameLock):
             notify_payload = CHSesame2BleNotify(rawdata)
         elif segment_type == BleCommunicationType.ciphertext:
             cipher = self.getCipher()
+            if cipher is None:
+                raise RuntimeError("setCipher should be called before decryption.")
             notify_payload = CHSesame2BleNotify(cipher.decrypt(rawdata))
 
         if notify_payload.getNotifyOpCode() == BleOpCode.publish:
@@ -280,19 +291,17 @@ class CHSesame2(CHSesameLock):
                 login_response = CHSesame2BleLoginResponse(
                     response_payload.getPayload()
                 )
+                mech_setting = login_response.getMechSetting()
+                mech_status = login_response.getMechStatus()
 
-                logger.debug(
-                    f"onCharacteristicChanged: retrived {str(login_response.getMechSetting())}"
-                )
-                self.setMechSetting(login_response.getMechSetting())
-                logger.debug(
-                    f"onCharacteristicChanged: retrived {str(login_response.getMechStatus())}"
-                )
-                self.setMechStatus(login_response.getMechStatus())
-                if self.getMechSetting().isConfigured:
+                logger.debug(f"onCharacteristicChanged: retrived {str(mech_setting)}")
+                self.setMechSetting(mech_setting)
+                logger.debug(f"onCharacteristicChanged: retrived {str(mech_status)}")
+                self.setMechStatus(mech_status)
+                if mech_setting.isConfigured:
                     self.setDeviceStatus(
                         CHSesame2Status.Locked
-                        if self.getMechStatus().isInLockRange()
+                        if mech_status.isInLockRange()
                         else CHSesame2Status.Unlocked
                     )
                 else:
@@ -312,32 +321,25 @@ class CHSesame2(CHSesameLock):
                 )
             else:
                 await self.loginSesame()
-
-        if publish_payload.getCmdItCode() == BleItemCode.mechStatus:
-            logger.debug(
-                f"onGattSesamePublish: recieved {str(CHSesame2MechStatus(rawdata=publish_payload.getPayload()))}"
-            )
-            self.setMechStatus(
-                CHSesame2MechStatus(rawdata=publish_payload.getPayload())
-            )
-            self.setDeviceStatus(
-                CHSesame2Status.Locked
-                if self.getMechStatus().isInLockRange()
-                else CHSesame2Status.Unlocked
+        elif publish_payload.getCmdItCode() == BleItemCode.mechStatus:
+            received_mechstatus = CHSesame2MechStatus(
+                rawdata=publish_payload.getPayload()
             )
 
-        if publish_payload.getCmdItCode() == BleItemCode.mechSetting:
-            logger.debug(
-                f"onGattSesamePublish: recieved {str(CHSesame2MechSettings(rawdata=publish_payload.getPayload()))}"
-            )
-            self.setMechSetting(
-                CHSesame2MechSettings(rawdata=publish_payload.getPayload())
-            )
+            logger.debug(f"onGattSesamePublish: recieved {str(received_mechstatus)}")
+            self.setMechStatus(received_mechstatus)
             self.setDeviceStatus(
                 CHSesame2Status.Locked
-                if self.getMechStatus().isInLockRange()
+                if received_mechstatus.isInLockRange()
                 else CHSesame2Status.Unlocked
             )
+        elif publish_payload.getCmdItCode() == BleItemCode.mechSetting:
+            received_mechsetting = CHSesame2MechSettings(
+                rawdata=publish_payload.getPayload()
+            )
+
+            logger.debug(f"onGattSesamePublish: recieved {str(received_mechsetting)}")
+            self.setMechSetting(received_mechsetting)
 
     async def lock(self, history_tag: str = "pysesameos2") -> None:
         """Locking.
@@ -377,7 +379,7 @@ class CHSesame2(CHSesameLock):
             BleCommunicationType.ciphertext,
         )
 
-    def toggle(self, history_tag: str = "pysesameos2") -> None:
+    async def toggle(self, history_tag: str = "pysesameos2") -> None:
         """Toggle.
 
         Args:
@@ -390,9 +392,9 @@ class CHSesame2(CHSesameLock):
         if status is None:
             raise RuntimeError("Current status is unknown")
         elif status.isInLockRange():
-            return self.unlock(history_tag=history_tag)
+            await self.unlock(history_tag=history_tag)
         elif status.isInUnlockRange():
-            return self.lock(history_tag=history_tag)
+            await self.lock(history_tag=history_tag)
 
     def __str__(self) -> str:
         """Return a string representation of an object.

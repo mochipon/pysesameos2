@@ -244,7 +244,8 @@ class TestCHBleManager:
             manufacturer_data={1370: b"\x02\x00\x01"},
         )
 
-        assert CHBleManager().device_factory(bled) is None
+        with pytest.raises(NotImplementedError):
+            assert CHBleManager().device_factory(bled)
 
     def test_CHBleManager_device_factory(self):
         bled = bleak.backends.device.BLEDevice(
@@ -259,6 +260,49 @@ class TestCHBleManager:
 
         d = CHBleManager().device_factory(bled)
         assert isinstance(d, CHSesame2)
+
+    @pytest.mark.asyncio
+    async def test_CHBleManager_scan_returns_None(self, bleak_scanner):
+        async def _scan(*args, **kwargs):
+            """Simulate a scanning response"""
+            return [
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:11:22:33",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "0000fd81-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x02\x00\x01"},
+                ),
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:44:55:66",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "ffffffff-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x00\x00\x01"},
+                ),
+            ]
+
+        bleak_scanner.discover.side_effect = _scan
+
+        assert await CHBleManager().scan() == {}
+
+        bleak_scanner.discover.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_CHBleManager_scan_pass_BleakError_exception(self, bleak_scanner):
+        async def raise_exception(*args, **kwargs):
+            raise bleak.exc.BleakError("TEST")
+
+        bleak_scanner.discover.side_effect = raise_exception
+
+        devices = await CHBleManager().scan()
+        assert len(devices) == 0
+
+        bleak_scanner.discover.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_CHBleManager_scan(self, bleak_scanner):
@@ -349,6 +393,15 @@ class TestCHBleManager:
                     rssi=-60,
                     manufacturer_data={1370: b"\x02\x00\x01"},
                 ),
+                bleak.backends.device.BLEDevice(
+                    "AA:BB:CC:DD:EE:FF",
+                    "QpGK0YFUSv+9H/DN6IqN4Q",
+                    uuids=[
+                        "ffffffff-0000-1000-8000-00805f9b34fb",
+                    ],
+                    rssi=-60,
+                    manufacturer_data={1370: b"\x02\x00\x01"},
+                ),
             ]
 
         bleak_scanner.discover.side_effect = _scan
@@ -365,10 +418,13 @@ class TestCHBleManager:
         with pytest.raises(ValueError):
             await CHBleManager().scan_by_address("AA:BB:CC:AA:BB:CC")
 
-        assert bleak_scanner.discover.call_count == 4
+        with pytest.raises(ValueError):
+            await CHBleManager().scan_by_address("AA:BB:CC:DD:EE:FF")
+
+        assert bleak_scanner.discover.call_count == 5
 
     @pytest.mark.asyncio
-    async def test_CHBleManager_scan_by_address_returns_None_on_non_supported_device(
+    async def test_CHBleManager_scan_by_address_raises_exception_for_non_supported_device(
         self, bleak_scanner
     ):
         async def _scan(*args, **kwargs):
@@ -387,7 +443,7 @@ class TestCHBleManager:
 
         bleak_scanner.discover.side_effect = _scan
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(NotImplementedError):
             await CHBleManager().scan_by_address("AA:BB:CC:11:22:33")
 
         bleak_scanner.discover.assert_called_once()

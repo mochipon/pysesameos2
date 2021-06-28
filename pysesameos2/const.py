@@ -1,4 +1,6 @@
-from aenum import Enum, NoAlias, auto
+from enum import Enum, auto
+
+import aenum
 
 SERVICE_UUID = "0000fd81-0000-1000-8000-00805f9b34fb"
 TX_UUID = "16860002-a5ae-9856-b6d3-dbb4c676993e"
@@ -10,7 +12,7 @@ class CHDeviceLoginStatus(Enum):
     UnLogin = auto()
 
 
-class CHSesame2Status(Enum, settings=NoAlias):
+class CHSesame2Status(aenum.Enum, settings=aenum.NoAlias):  # type: ignore
     NoBleSignal = CHDeviceLoginStatus.UnLogin
     ReceivedBle = CHDeviceLoginStatus.UnLogin
     BleConnecting = CHDeviceLoginStatus.UnLogin

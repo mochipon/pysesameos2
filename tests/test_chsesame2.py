@@ -41,6 +41,10 @@ class TestCHSesame2:
         with pytest.raises(TypeError):
             CHSesame2MechStatus(10)
 
+        s = CHSesame2()
+        with pytest.raises(TypeError):
+            s.setMechStatus("INVALID")
+
     def test_CHSesame2_MechStatus_idle_before_setMechSetting(self):
         s = CHSesame2()
 
@@ -78,5 +82,10 @@ class TestCHSesame2:
         s.setMechStatus(CHSesame2MechStatus("5c03e301f0020004"))
 
         assert s.getIntention() == CHSesame2Intention.locking
+
+    def test_CHSesame2_MechSetting_raises_exception_on_invalid_argument(self):
+        s = CHSesame2()
+        with pytest.raises(TypeError):
+            s.setMechSetting("INVALID")
 
     # TODO: Develop tests for the methods which relate to BleakClient.

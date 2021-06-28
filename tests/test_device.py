@@ -49,6 +49,71 @@ def ble_advertisement_not_registed_device():
     return ble_advertisement
 
 
+class TestCHDeviceKey:
+    def test_CHDeviceKey_secretKey_raises_exception_on_invalid_value(self):
+        k = CHDeviceKey()
+
+        with pytest.raises(TypeError) as excinfo:
+            k.setSecretKey(123)
+        assert "should be str or bytes" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSecretKey("FAKE")
+        assert "non-hexadecimal number found" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSecretKey("FEED")
+        assert "length should be 16" in str(excinfo.value)
+
+    def test_CHDeviceKey_secretKey(self):
+        k = CHDeviceKey()
+
+        assert k.getSecretKey() is None
+
+        secret_str = "34344f4734344b3534344f4934344f47"
+        secret_bytes = bytes.fromhex(secret_str)
+
+        assert k.setSecretKey(secret_bytes) is None
+        assert k.getSecretKey() == secret_bytes
+
+        assert k.setSecretKey(secret_str) is None
+        assert k.getSecretKey() == secret_bytes
+
+    def test_CHDeviceKey_sesame2PublicKey_raises_exception_on_invalid_value(self):
+        k = CHDeviceKey()
+
+        with pytest.raises(TypeError) as excinfo:
+            k.setSesame2PublicKey(123)
+        assert "should be str or bytes" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSesame2PublicKey("FAKE")
+        assert "non-hexadecimal number found" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSesame2PublicKey("FEED")
+        assert "length should be 64" in str(excinfo.value)
+
+    def test_CHDeviceKey_sesame2PublicKey(self):
+        k = CHDeviceKey()
+
+        assert k.getSesame2PublicKey() is None
+
+        pubkey_str = "34344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f47"
+        pubkey_bytes = bytes.fromhex(pubkey_str)
+
+        assert k.setSesame2PublicKey(pubkey_bytes) is None
+        assert k.getSesame2PublicKey() == pubkey_bytes
+
+        assert k.setSesame2PublicKey(pubkey_str) is None
+        assert k.getSesame2PublicKey() == pubkey_bytes
+
+    def test_CHDeviceKey_getKeyIndex(self):
+        k = CHDeviceKey()
+
+        assert k.getKeyIndex() == bytes([0, 0])
+
+
 class TestCHDevices:
     def test_CHDevices_deviceId_raises_exception_on_invalid_uuid(self):
         d = CHDevices()
@@ -305,63 +370,3 @@ class TestCHSesameLock:
 
         assert d.setKey(k) is None
         assert d.getKey() == k
-
-
-class TestCHDeviceKey:
-    def test_CHDeviceKey_secretKey_raises_exception_on_invalid_value(self):
-        k = CHDeviceKey()
-
-        with pytest.raises(TypeError) as excinfo:
-            k.setSecretKey(123)
-        assert "should be str or bytes" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSecretKey("FAKE")
-        assert "non-hexadecimal number found" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSecretKey("FEED")
-        assert "length should be 16" in str(excinfo.value)
-
-    def test_CHDeviceKey_secretKey(self):
-        k = CHDeviceKey()
-
-        assert k.getSecretKey() is None
-
-        secret_str = "34344f4734344b3534344f4934344f47"
-        secret_bytes = bytes.fromhex(secret_str)
-
-        assert k.setSecretKey(secret_bytes) is None
-        assert k.getSecretKey() == secret_bytes
-
-        assert k.setSecretKey(secret_str) is None
-        assert k.getSecretKey() == secret_bytes
-
-    def test_CHDeviceKey_sesame2PublicKey_raises_exception_on_invalid_value(self):
-        k = CHDeviceKey()
-
-        with pytest.raises(TypeError) as excinfo:
-            k.setSesame2PublicKey(123)
-        assert "should be str or bytes" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSesame2PublicKey("FAKE")
-        assert "non-hexadecimal number found" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSesame2PublicKey("FEED")
-        assert "length should be 64" in str(excinfo.value)
-
-    def test_CHDeviceKey_sesame2PublicKey(self):
-        k = CHDeviceKey()
-
-        assert k.getSesame2PublicKey() is None
-
-        pubkey_str = "34344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f47"
-        pubkey_bytes = bytes.fromhex(pubkey_str)
-
-        assert k.setSesame2PublicKey(pubkey_bytes) is None
-        assert k.getSesame2PublicKey() == pubkey_bytes
-
-        assert k.setSesame2PublicKey(pubkey_str) is None
-        assert k.getSesame2PublicKey() == pubkey_bytes

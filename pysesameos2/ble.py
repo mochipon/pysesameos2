@@ -3,7 +3,7 @@ import base64
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import bleak
 from bleak.backends.device import BLEDevice
@@ -52,7 +52,7 @@ class CHSesame2BleTransmiter:
             "The packet is fragmented into {} packets.".format(len(self._waitsend))
         )
 
-    def getChunk(self) -> bytes:
+    def getChunk(self) -> Optional[bytes]:
         """Return a chunk of packet to be sent.
 
         Returns:
@@ -124,7 +124,7 @@ class CHSesame2BleReceiver:
         i2 = b >> 1
 
         if i > 0:
-            self.buffer = barr[1:]
+            self.buffer = bytearray(barr[1:])
         else:
             logger.debug("feed: This is the last fragmented packet.")
             self.buffer += barr[1:]
@@ -133,7 +133,7 @@ class CHSesame2BleReceiver:
             logger.debug("feed: This is a part of fragmented packet.")
             return (None, None)
 
-        return (BleCommunicationType(i2), self.buffer)
+        return (BleCommunicationType(i2), bytes(self.buffer))
 
 
 class CHSesame2BlePayload:
@@ -354,7 +354,7 @@ class BLEAdvertisement:
     def getDevice(self) -> BLEDevice:
         return self._device
 
-    def getRssi(self) -> float:
+    def getRssi(self) -> int:
         return self._rssi
 
     def getDeviceID(self) -> uuid.UUID:
@@ -397,12 +397,14 @@ class CHBleManager:
 
             # TODO: Support other devices.
             if adv.getProductModel() != CHProductModel.SS2:
-                return None
+                raise NotImplementedError("The device is not supported!")
 
             device = adv.getProductModel().deviceFactory()()
             device.setAdvertisement(adv)
 
             return device
+        else:
+            raise ValueError("Failed to find the service uuid")
 
     async def scan(self, scan_duration: int = 10) -> Dict[str, CHDevices]:
         """Scan devices.
@@ -421,7 +423,15 @@ class CHBleManager:
             )
 
             for device in devices:
-                obj = self.device_factory(device)
+                try:
+                    obj = self.device_factory(device)
+                except NotImplementedError:
+                    logger.warning("Unsupported SESAME device is found, skip.")
+                    continue
+                except ValueError:
+                    logger.warning("Not a SESAME device, skip.")
+                    continue
+
                 if obj is not None:
                     ret[device.address] = obj
         except BleakError as e:
@@ -457,27 +467,23 @@ class CHBleManager:
         # https://github.com/hbldh/bleak/blob/55a2d34cc96bb842be278485794806704caa2d2c/bleak/backends/scanner.py#L101
         # https://github.com/hbldh/bleak/blob/ce63ed4d92430f154ce33ab812e313961b26f7a4/bleak/backends/bluezdbus/scanner.py#L213-L237
 
+        devices = await asyncio.wait_for(bleak.BleakScanner.discover(), scan_duration)
+
+        device = next(
+            (d for d in devices if d.address.lower() == ble_device_identifier.lower()),
+            None,
+        )
+        if device is None:
+            raise ConnectionRefusedError("Scan completed: the device not found")
+
         try:
-            devices = await asyncio.wait_for(
-                bleak.BleakScanner.discover(), scan_duration
-            )
-
-            device = next(
-                (
-                    d
-                    for d in devices
-                    if d.address.lower() == ble_device_identifier.lower()
-                ),
-                None,
-            )
-            if device is None:
-                raise ConnectionRefusedError("Scan completed: the device not found")
-
             obj = self.device_factory(device)
-            if obj is None:
-                raise RuntimeError("Scan completed: the device is not supported")
+        except NotImplementedError:
+            raise NotImplementedError("This device is not supported.")
+        except ValueError:
+            raise ValueError("This is not a SESAME device.")
 
-            logger.info("Scan completed: found the device")
-            return obj
-        except ValueError as e:
-            raise e
+        obj = self.device_factory(device)
+
+        logger.info("Scan completed: found the device")
+        return obj
