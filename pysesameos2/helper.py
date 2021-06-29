@@ -1,37 +1,57 @@
-from __future__ import annotations
-
 import importlib
+import sys
 from enum import Enum
 from typing import Generator, Union
 
+if sys.version_info[:2] >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
+
+
+class ProductData(TypedDict):
+    deviceModel: str
+    isLocker: bool
+    productType: int
+    deviceFactory: Union[str, None]
+
 
 class CHProductModel(Enum):
-    WM2 = {
+
+    WM2: ProductData = {
         "deviceModel": "wm_2",
         "isLocker": False,
         "productType": 1,
         "deviceFactory": None,
     }
-    SS2 = {
+    SS2: ProductData = {
         "deviceModel": "sesame_2",
         "isLocker": True,
         "productType": 0,
         "deviceFactory": "CHSesame2",
     }
 
-    def getByModel(model: str) -> Union[CHProductModel, None]:
+    @staticmethod
+    def getByModel(model: str) -> "CHProductModel":
         if not isinstance(model, str):
-            raise ValueError("Invalid Model")
-        return next(
-            (e for e in list(CHProductModel) if e.value["deviceModel"] == model), None
-        )
+            raise TypeError("Invalid Model")
+        try:
+            return next(
+                e for e in list(CHProductModel) if e.value["deviceModel"] == model
+            )
+        except StopIteration:
+            raise NotImplementedError("This device is not supported.")
 
-    def getByValue(val: int) -> Union[CHProductModel, None]:
+    @staticmethod
+    def getByValue(val: int) -> "CHProductModel":
         if not isinstance(val, int):
-            raise ValueError("Invalid Value")
-        return next(
-            (e for e in list(CHProductModel) if e.value["productType"] == val), None
-        )
+            raise TypeError("Invalid Value")
+        try:
+            return next(
+                e for e in list(CHProductModel) if e.value["productType"] == val
+            )
+        except StopIteration:
+            raise NotImplementedError("This device is not supported.")
 
     def deviceModel(self) -> str:
         return self.value["deviceModel"]
@@ -42,16 +62,15 @@ class CHProductModel(Enum):
     def productType(self) -> int:
         return self.value["productType"]
 
-    def deviceFactory(self) -> Union[type, None]:
-        if self.value["deviceFactory"] is not None:
-            return getattr(
-                importlib.import_module(
-                    f"pysesameos2.{self.value['deviceFactory'].lower()}"
-                ),
-                self.value["deviceFactory"],
-            )
-        else:
-            return None
+    def deviceFactory(self) -> type:
+        if self.value["deviceFactory"] is None:
+            raise NotImplementedError("This device type is not supported.")
+        return getattr(
+            importlib.import_module(
+                f"pysesameos2.{self.value['deviceFactory'].lower()}"
+            ),
+            self.value["deviceFactory"],
+        )
 
 
 class CHSesame2MechStatus:
@@ -207,6 +226,7 @@ class CHSesame2MechSettings:
 
 
 class HistoryTagHelper:
+    @staticmethod
     def split_utf8(s: bytes, n: int) -> Generator[bytes, None, None]:
         """
         Split UTF-8 s into chunks of maximum length n.
@@ -221,6 +241,7 @@ class HistoryTagHelper:
             s = s[k:]
         yield s
 
+    @staticmethod
     def create_htag(history_tag: str) -> bytes:
         """Create a bytes representation of a history tag.
 

@@ -4,9 +4,11 @@
 
 import asyncio
 import uuid
+from unittest.mock import MagicMock
 
-import bleak
 import pytest
+from bleak.backends.characteristic import BleakGATTCharacteristic
+from bleak.backends.device import BLEDevice
 
 from pysesameos2.ble import BLEAdvertisement
 from pysesameos2.const import CHSesame2Intention, CHSesame2Status
@@ -17,7 +19,7 @@ from pysesameos2.helper import CHProductModel
 
 @pytest.fixture(autouse=True)
 def ble_advertisement():
-    bledevice = bleak.backends.device.BLEDevice(
+    bledevice = BLEDevice(
         "AA:BB:CC:11:22:33",
         "QpGK0YFUSv+9H/DN6IqN4Q",
         uuids=[
@@ -34,7 +36,7 @@ def ble_advertisement():
 
 @pytest.fixture(autouse=True)
 def ble_advertisement_not_registed_device():
-    bledevice = bleak.backends.device.BLEDevice(
+    bledevice = BLEDevice(
         "AA:BB:CC:11:22:33",
         "QpGK0YFUSv+9H/DN6IqN4Q",
         uuids=[
@@ -47,6 +49,71 @@ def ble_advertisement_not_registed_device():
         dev=bledevice, manufacturer_data={1370: b"\x00\x00\x00"}
     )
     return ble_advertisement
+
+
+class TestCHDeviceKey:
+    def test_CHDeviceKey_secretKey_raises_exception_on_invalid_value(self):
+        k = CHDeviceKey()
+
+        with pytest.raises(TypeError) as excinfo:
+            k.setSecretKey(123)
+        assert "should be str or bytes" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSecretKey("FAKE")
+        assert "non-hexadecimal number found" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSecretKey("FEED")
+        assert "length should be 16" in str(excinfo.value)
+
+    def test_CHDeviceKey_secretKey(self):
+        k = CHDeviceKey()
+
+        assert k.getSecretKey() is None
+
+        secret_str = "34344f4734344b3534344f4934344f47"
+        secret_bytes = bytes.fromhex(secret_str)
+
+        assert k.setSecretKey(secret_bytes) is None
+        assert k.getSecretKey() == secret_bytes
+
+        assert k.setSecretKey(secret_str) is None
+        assert k.getSecretKey() == secret_bytes
+
+    def test_CHDeviceKey_sesame2PublicKey_raises_exception_on_invalid_value(self):
+        k = CHDeviceKey()
+
+        with pytest.raises(TypeError) as excinfo:
+            k.setSesame2PublicKey(123)
+        assert "should be str or bytes" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSesame2PublicKey("FAKE")
+        assert "non-hexadecimal number found" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            k.setSesame2PublicKey("FEED")
+        assert "length should be 64" in str(excinfo.value)
+
+    def test_CHDeviceKey_sesame2PublicKey(self):
+        k = CHDeviceKey()
+
+        assert k.getSesame2PublicKey() is None
+
+        pubkey_str = "34344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f47"
+        pubkey_bytes = bytes.fromhex(pubkey_str)
+
+        assert k.setSesame2PublicKey(pubkey_bytes) is None
+        assert k.getSesame2PublicKey() == pubkey_bytes
+
+        assert k.setSesame2PublicKey(pubkey_str) is None
+        assert k.getSesame2PublicKey() == pubkey_bytes
+
+    def test_CHDeviceKey_getKeyIndex(self):
+        k = CHDeviceKey()
+
+        assert k.getKeyIndex() == bytes([0, 0])
 
 
 class TestCHDevices:
@@ -276,8 +343,13 @@ class TestCHSesameLock:
             d.setCharacteristicTX("INVALID-CHAR")
 
     def test_CHSesameLock_CharacteristicTX(self):
-        # TODO: I'm not sure how can I make a mock of `BleakGATTCharacteristic`.
-        pass
+        d = CHSesameLock()
+
+        assert d.getCharacteristicTX() is None
+
+        mock_char = MagicMock(spec=BleakGATTCharacteristic)
+        assert d.setCharacteristicTX(mock_char) is None
+        assert d.getCharacteristicTX() == mock_char
 
     def test_CHSesameLock(self):
         d = CHSesameLock()
@@ -305,63 +377,3 @@ class TestCHSesameLock:
 
         assert d.setKey(k) is None
         assert d.getKey() == k
-
-
-class TestCHDeviceKey:
-    def test_CHDeviceKey_secretKey_raises_exception_on_invalid_value(self):
-        k = CHDeviceKey()
-
-        with pytest.raises(TypeError) as excinfo:
-            k.setSecretKey(123)
-        assert "should be str or bytes" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSecretKey("FAKE")
-        assert "non-hexadecimal number found" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSecretKey("FEED")
-        assert "length should be 16" in str(excinfo.value)
-
-    def test_CHDeviceKey_secretKey(self):
-        k = CHDeviceKey()
-
-        assert k.getSecretKey() is None
-
-        secret_str = "34344f4734344b3534344f4934344f47"
-        secret_bytes = bytes.fromhex(secret_str)
-
-        assert k.setSecretKey(secret_bytes) is None
-        assert k.getSecretKey() == secret_bytes
-
-        assert k.setSecretKey(secret_str) is None
-        assert k.getSecretKey() == secret_bytes
-
-    def test_CHDeviceKey_sesame2PublicKey_raises_exception_on_invalid_value(self):
-        k = CHDeviceKey()
-
-        with pytest.raises(TypeError) as excinfo:
-            k.setSesame2PublicKey(123)
-        assert "should be str or bytes" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSesame2PublicKey("FAKE")
-        assert "non-hexadecimal number found" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            k.setSesame2PublicKey("FEED")
-        assert "length should be 64" in str(excinfo.value)
-
-    def test_CHDeviceKey_sesame2PublicKey(self):
-        k = CHDeviceKey()
-
-        assert k.getSesame2PublicKey() is None
-
-        pubkey_str = "34344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f4734344b3534344f4934344f47"
-        pubkey_bytes = bytes.fromhex(pubkey_str)
-
-        assert k.setSesame2PublicKey(pubkey_bytes) is None
-        assert k.getSesame2PublicKey() == pubkey_bytes
-
-        assert k.setSesame2PublicKey(pubkey_str) is None
-        assert k.getSesame2PublicKey() == pubkey_bytes

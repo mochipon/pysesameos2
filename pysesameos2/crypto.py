@@ -33,6 +33,10 @@ class AppKey:
         self._appToken = secrets.token_bytes(4)
         return self
 
+    def __init__(self) -> None:  # pragma: no cover
+        self._secretKey: bytes
+        self._appToken: bytes
+
     def getAppToken(self) -> bytes:
         return self._appToken
 
@@ -55,10 +59,9 @@ class AppKey:
             "3059301306072a8648ce3d020106082a8648ce3d03010703420004"
         )
 
-        remote_pk = serialization.load_der_public_key(fixed_header + remote_pubkey)
-        shared_key = serialization.load_der_private_key(
-            self._secretKey, password=None
-        ).exchange(ec.ECDH(), remote_pk)
+        remote_pk: ec.EllipticCurvePublicKey = serialization.load_der_public_key(fixed_header + remote_pubkey)  # type: ignore
+        local_sk: ec.EllipticCurvePrivateKey = serialization.load_der_private_key(self._secretKey, password=None)  # type: ignore
+        shared_key = local_sk.exchange(ec.ECDH(), remote_pk)
         return shared_key
 
 

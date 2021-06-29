@@ -29,24 +29,27 @@ class TestCHProductModel:
         assert wm2.deviceModel() == "wm_2"
         assert not wm2.isLocker()
         assert wm2.productType() == 1
-        assert wm2.deviceFactory() is None
+        with pytest.raises(NotImplementedError):
+            wm2.deviceFactory()
 
     def test_CHProductModel_getByModel_raises_exception_on_invalid_arguments(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             CHProductModel.getByModel(123)
 
     def test_CHProductModel_getByModel_returns_None_for_unknown_model(self):
-        assert CHProductModel.getByModel("sesame_99") is None
+        with pytest.raises(NotImplementedError):
+            CHProductModel.getByModel("sesame_99")
 
     def test_CHProductModel_getByModel_returns_SS2(self):
         assert CHProductModel.getByModel("sesame_2") is CHProductModel.SS2
 
     def test_CHProductModel_getByValue_raises_exception_on_invalid_arguments(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             CHProductModel.getByValue("0")
 
     def test_CHProductModel_getByValue_returns_None_for_unknown_model(self):
-        assert CHProductModel.getByValue(999) is None
+        with pytest.raises(NotImplementedError):
+            CHProductModel.getByValue(999)
 
     def test_CHProductModel_getByValue_returns_SS2(self):
         assert CHProductModel.getByValue(0) is CHProductModel.SS2

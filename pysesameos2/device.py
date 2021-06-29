@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import logging
 import uuid
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
@@ -17,21 +15,88 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class CHDeviceKey:
+    def __init__(self) -> None:
+        self._secretKey: Optional[bytes] = None
+        self._sesame2PublicKey: Optional[bytes] = None
+
+        # According to the spec, this is fixed (;_;)...
+        self._keyindex = bytes.fromhex("0000")
+
+    def getSecretKey(self) -> Optional[bytes]:
+        """Return a secret key of a specific device.
+
+        Returns:
+            str: The secret key for controlling the device.
+        """
+        return self._secretKey
+
+    def getSesame2PublicKey(self) -> Optional[bytes]:
+        """Return a public key of a specific device.
+
+        Returns:
+            str: The public key of the device.
+        """
+        return self._sesame2PublicKey
+
+    def getKeyIndex(self) -> bytes:
+        """Return a index of a key.
+
+        Returns:
+            str: The index of the key
+        """
+        return self._keyindex
+
+    def setSecretKey(self, key: Union[bytes, str]) -> None:
+        """Set a secret key for a specific device.
+
+        Args:
+            key (str): The secret key for controlling the device.
+
+        Raises:
+            ValueError: If `key` is invalid.
+        """
+        if not isinstance(key, bytes) and not isinstance(key, str):
+            raise TypeError("Invalid SecretKey - should be str or bytes.")
+        if not isinstance(key, bytes):
+            key = bytes.fromhex(key)
+        if len(key) != 16:
+            raise ValueError("Invalid SecretKey - length should be 16.")
+        self._secretKey = key
+
+    def setSesame2PublicKey(self, key: Union[bytes, str]) -> None:
+        """Set a public key of a specific device.
+
+        Args:
+            key (str): The public key of the device.
+
+        Raises:
+            ValueError: If `key` is invalid.
+        """
+        if not isinstance(key, bytes) and not isinstance(key, str):
+            raise TypeError("Invalid Sesame2PublicKey - should be str or bytes.")
+        if not isinstance(key, bytes):
+            key = bytes.fromhex(key)
+        if len(key) != 64:
+            raise ValueError("Invalid Sesame2PublicKey - length should be 64.")
+        self._sesame2PublicKey = key
+
+
 class CHDevices:
     def __init__(self) -> None:
         """Generic Implementation for Candyhouse products."""
-        self._deviceId = None
-        self._productModel = None
-        self._registered = False
-        self._rssi = -100
-        self._deviceStatus = CHSesame2Status.NoBleSignal
-        self._deviceStatus_callback = None
-        self._advertisement = None
-        self._key = CHDeviceKey()
+        self._deviceId: Optional[uuid.UUID] = None
+        self._productModel: Optional[CHProductModel] = None
+        self._registered: bool = False
+        self._rssi: int = -100
+        self._deviceStatus: CHSesame2Status = CHSesame2Status.NoBleSignal  # type: ignore
+        self._deviceStatus_callback: Optional[Callable[[CHDevices], None]] = None
+        self._advertisement: Optional[BLEAdvertisement] = None
+        self._key: CHDeviceKey = CHDeviceKey()
         self._login_event = asyncio.Event()
 
     @property
-    def deviceId(self) -> str:
+    def deviceId(self) -> Optional[str]:
         """Return a device id of a specific device.
 
         Returns:
@@ -43,7 +108,7 @@ class CHDevices:
             return None
 
     @property
-    def productModel(self) -> CHProductModel:
+    def productModel(self) -> Optional["CHProductModel"]:
         """Return a model information of a specific device.
 
         Returns:
@@ -65,7 +130,7 @@ class CHDevices:
         Returns:
             status (CHSesame2Status): The status of the device.
         """
-        return self._deviceStatus
+        return self._deviceStatus  # type: ignore
 
     def getRegistered(self) -> bool:
         """Return a status of whether a device is already registed with the server.
@@ -75,7 +140,7 @@ class CHDevices:
         """
         return self._registered
 
-    def getAdvertisement(self) -> BLEAdvertisement:
+    def getAdvertisement(self) -> Optional["BLEAdvertisement"]:
         """Return a cached BLE advertisement.
 
         Returns:
@@ -106,7 +171,7 @@ class CHDevices:
             raise TypeError("Invalid UUID")
         self._deviceId = id
 
-    def setProductModel(self, model: CHProductModel) -> None:
+    def setProductModel(self, model: "CHProductModel") -> None:
         """Set a model information of a specific device.
 
         Args:
@@ -129,7 +194,7 @@ class CHDevices:
             raise TypeError("Invalid RSSI - should be int.")
         self._rssi = rssi
 
-    def setDeviceStatus(self, status: CHSesame2Status) -> None:
+    def setDeviceStatus(self, status: Any) -> None:
         """Set a current status of a device.
 
         Args:
@@ -158,11 +223,11 @@ class CHDevices:
 
         self._registered = isRegistered
 
-    def setAdvertisement(self, adv: BLEAdvertisement) -> None:
+    def setAdvertisement(self, adv: Optional["BLEAdvertisement"] = None) -> None:
         """Get device information based on BLE advertisements and set properties accordingly.
 
         Args:
-            adv (BLEAdvertisement): The advertisement from the device.
+            adv (BLEAdvertisement): The advertisement from the device. Defaults to `None`.
 
         Raises:
             ValueError: If the device is not registred.
@@ -172,40 +237,34 @@ class CHDevices:
         else:
             self._advertisement = adv
 
-        if self._advertisement is None:
+        if adv is None:
             logger.debug("setAdvertisement: Reset the status")
             self.setDeviceStatus(CHSesame2Status.NoBleSignal)
             self.setRssi(-100)
             return
 
-        if self.getAdvertisement().isRegistered() is False:
+        if adv.isRegistered() is False:
             raise RuntimeError(
                 "This device is not supported: initial configuration needed from the official mobile app."
             )
 
-        logger.debug(
-            f"setAdvertisement: Product Model = {self.getAdvertisement().getProductModel()}"
-        )
-        self.setProductModel(self.getAdvertisement().getProductModel())
+        logger.debug(f"setAdvertisement: Product Model = {adv.getProductModel()}")
+        self.setProductModel(adv.getProductModel())
 
-        logger.debug(f"setAdvertisement: RSSI = {self.getAdvertisement().getRssi()}")
-        self.setRssi(self.getAdvertisement().getRssi())
+        logger.debug(f"setAdvertisement: RSSI = {adv.getRssi()}")
+        self.setRssi(adv.getRssi())
 
-        logger.debug(
-            f"setAdvertisement: Device ID (UUID) = {self.getAdvertisement().getDeviceID()}"
-        )
-        self.setDeviceId(self.getAdvertisement().getDeviceID())
+        logger.debug(f"setAdvertisement: Device ID (UUID) = {adv.getDeviceID()}")
+        self.setDeviceId(adv.getDeviceID())
 
-        logger.debug(
-            f"setAdvertisement: isRegistered = {self.getAdvertisement().isRegistered()}"
-        )
-        self.setRegistered(self.getAdvertisement().isRegistered())
+        logger.debug(f"setAdvertisement: isRegistered = {adv.isRegistered()}")
+        self.setRegistered(adv.isRegistered())
 
         if self.getDeviceStatus() == CHSesame2Status.NoBleSignal:
             self.setDeviceStatus(CHSesame2Status.ReceivedBle)
 
     def setDeviceStatusCallback(
-        self, callback: Optional[Callable[[CHDevices], None]]
+        self, callback: Optional[Callable[["CHDevices"], None]]
     ) -> None:
         """Set a device status callback.
 
@@ -236,12 +295,12 @@ class CHSesameLock(CHDevices):
     def __init__(self) -> None:
         """Generic Implementation for Candyhouse smart locks."""
         super().__init__()
-        self._intention = CHSesame2Intention.idle
-        self._characteristicTX = None
-        self._sesameToken = None
-        self._cipher = None
+        self._intention: CHSesame2Intention = CHSesame2Intention.idle
+        self._characteristicTX: Optional[BleakGATTCharacteristic] = None
+        self._sesameToken: Optional[bytes] = None
+        self._cipher: Optional[BleCipher] = None
 
-    def getDeviceUUID(self) -> str:
+    def getDeviceUUID(self) -> Optional[str]:
         """Return a device UUID of a specific device.
 
         Returns:
@@ -257,7 +316,7 @@ class CHSesameLock(CHDevices):
         """
         return self._intention
 
-    def getCharacteristicTX(self) -> BleakGATTCharacteristic:
+    def getCharacteristicTX(self) -> Optional[BleakGATTCharacteristic]:
         """Get a cached BleakGATTCharacteristic object.
 
         Returns:
@@ -265,7 +324,7 @@ class CHSesameLock(CHDevices):
         """
         return self._characteristicTX
 
-    def getCipher(self) -> BleCipher:
+    def getCipher(self) -> Optional[BleCipher]:
         """Get an object to process encryption/decryption of data.
 
         Returns:
@@ -273,7 +332,7 @@ class CHSesameLock(CHDevices):
         """
         return self._cipher
 
-    def getSesameToken(self) -> bytes:
+    def getSesameToken(self) -> Optional[bytes]:
         """Return a cached token which is received from a device during its login process.
 
         Returns:
@@ -337,70 +396,3 @@ class CHSesameLock(CHDevices):
             str: The string representation of the object.
         """
         return f"CHSesameLock(deviceUUID={self.getDeviceUUID()}, deviceModel={self.productModel})"
-
-
-class CHDeviceKey:
-    def __init__(self) -> None:
-        self._secretKey = None
-        self._sesame2PublicKey = None
-
-        # According to the spec, this is fixed (;_;)...
-        self._keyindex = bytes.fromhex("0000")
-
-    def getSecretKey(self) -> bytes:
-        """Return a secret key of a specific device.
-
-        Returns:
-            str: The secret key for controlling the device.
-        """
-        return self._secretKey
-
-    def getSesame2PublicKey(self) -> bytes:
-        """Return a public key of a specific device.
-
-        Returns:
-            str: The public key of the device.
-        """
-        return self._sesame2PublicKey
-
-    def getKeyIndex(self) -> bytes:
-        """Return a index of a key.
-
-        Returns:
-            str: The index of the key
-        """
-        return self._keyindex
-
-    def setSecretKey(self, key: Union[bytes, str]) -> None:
-        """Set a secret key for a specific device.
-
-        Args:
-            key (str): The secret key for controlling the device.
-
-        Raises:
-            ValueError: If `key` is invalid.
-        """
-        if not isinstance(key, bytes) and not isinstance(key, str):
-            raise TypeError("Invalid SecretKey - should be str or bytes.")
-        if not isinstance(key, bytes):
-            key = bytes.fromhex(key)
-        if len(key) != 16:
-            raise ValueError("Invalid SecretKey - length should be 16.")
-        self._secretKey = key
-
-    def setSesame2PublicKey(self, key: Union[bytes, str]) -> None:
-        """Set a public key of a specific device.
-
-        Args:
-            key (str): The public key of the device.
-
-        Raises:
-            ValueError: If `key` is invalid.
-        """
-        if not isinstance(key, bytes) and not isinstance(key, str):
-            raise TypeError("Invalid Sesame2PublicKey - should be str or bytes.")
-        if not isinstance(key, bytes):
-            key = bytes.fromhex(key)
-        if len(key) != 64:
-            raise ValueError("Invalid Sesame2PublicKey - length should be 64.")
-        self._sesame2PublicKey = key
