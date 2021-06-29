@@ -2,23 +2,21 @@ repos:
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.10
     hooks:
-    -   id: forbid-crlf
-    -   id: remove-crlf
     -   id: forbid-tabs
     -   id: remove-tabs
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:
     - id: check-added-large-files
-    - id: check-added-large-files
+    - id: check-builtin-literals
     - id: check-case-conflict
-    - id: check-merge-conflict
     - id: check-yaml
       args: [--unsafe]
     - id: debug-statements
     - id: end-of-file-fixer
     - id: forbid-new-submodules
     - id: trailing-whitespace
+    - id: mixed-line-ending
 -   repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.9.1
     hooks:
