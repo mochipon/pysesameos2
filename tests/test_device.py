@@ -4,8 +4,10 @@
 
 import asyncio
 import uuid
+from unittest.mock import MagicMock
 
 import pytest
+from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 
 from pysesameos2.ble import BLEAdvertisement
@@ -341,8 +343,13 @@ class TestCHSesameLock:
             d.setCharacteristicTX("INVALID-CHAR")
 
     def test_CHSesameLock_CharacteristicTX(self):
-        # TODO: I'm not sure how can I make a mock of `BleakGATTCharacteristic`.
-        pass
+        d = CHSesameLock()
+
+        assert d.getCharacteristicTX() is None
+
+        mock_char = MagicMock(spec=BleakGATTCharacteristic)
+        assert d.setCharacteristicTX(mock_char) is None
+        assert d.getCharacteristicTX() == mock_char
 
     def test_CHSesameLock(self):
         d = CHSesameLock()
