@@ -209,11 +209,7 @@ class CHSesame2(CHSesameLock):
             await self.transmit()
 
     async def loginSesame(self) -> None:
-        if self.getSesameToken() is None:
-            raise RuntimeError("SesameToken is not received.")
-
         logging.debug(f"Login to the device: {self.getDeviceUUID()}")
-        self.setDeviceStatus(CHSesame2Status.BleLogining)
 
         remote_keys = self.getKey()
         sesame_sk = remote_keys.getSecretKey()
@@ -241,6 +237,8 @@ class CHSesame2(CHSesameLock):
         payload = (
             sesame_keyindex + local_pk + local_keys.getAppToken() + cmac_tag_response
         )
+
+        self.setDeviceStatus(CHSesame2Status.BleLogining)
         await self.sendCommand(
             CHSesame2BlePayload(BleOpCode.sync, BleItemCode.login, payload),
             BleCommunicationType.plaintext,
@@ -316,7 +314,7 @@ class CHSesame2(CHSesameLock):
 
             if not self.getRegistered():
                 self.setDeviceStatus(CHSesame2Status.ReadyToRegister)
-                raise ValueError(
+                raise NotImplementedError(
                     "This SESAME3 is not supported: initial configuration needed."
                 )
             else:
