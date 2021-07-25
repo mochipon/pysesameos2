@@ -5,6 +5,8 @@ repo_name: pysesameos2
 strict: true
 extra_css:
   - styles/override.css
+extra_javascript:
+  - "https://code.jquery.com/jquery-3.6.0.min.js"
 nav:
   - Home: index.md
   - Installation: installation.md
