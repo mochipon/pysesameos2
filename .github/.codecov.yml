@@ -9,4 +9,5 @@ coverage:
         enabled: no
         if_not_found: success
     project:
+      default:
         informational: true
