@@ -1,6 +1,6 @@
 import asyncio
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from bleak import BleakClient
@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class CHSesameBotBleLoginResponse:
     def __init__(self, data: bytes) -> None:
         """A representation of a response for login operation.
@@ -72,6 +73,7 @@ class CHSesameBotBleLoginResponse:
             CHSesameBotMechStatus: The mechanical status.
         """
         return self._SSM2MechStatus
+
 
 class CHSesameBot(CHSesameLock):
     def __init__(self) -> None:
@@ -115,13 +117,15 @@ class CHSesameBot(CHSesameLock):
         logger.debug(f"setMechStatus: {str(status)}")
         self._mechStatus = status
 
-        if self.getMechStatus().getMotorStatus() == 0:
+        if status is None:
+            self.setIntention(CHSesame2Intention.movingToUnknownTarget)
+        if status.getMotorStatus() == 0:
             self.setIntention(CHSesame2Intention.idle)
-        elif self.getMechStatus().getMotorStatus() == 1:
+        elif status.getMotorStatus() == 1:
             self.setIntention(CHSesame2Intention.locking)
-        elif self.getMechStatus().getMotorStatus() == 2:
+        elif status.getMotorStatus() == 2:
             self.setIntention(CHSesame2Intention.holding)
-        elif self.getMechStatus().getMotorStatus() == 3:
+        elif status.getMotorStatus() == 3:
             self.setIntention(CHSesame2Intention.unlocking)
         else:
             self.setIntention(CHSesame2Intention.movingToUnknownTarget)

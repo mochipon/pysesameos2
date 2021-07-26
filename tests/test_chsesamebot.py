@@ -15,7 +15,12 @@ from pysesameos2.chsesamebot import CHSesameBot, CHSesameBotBleLoginResponse
 from pysesameos2.const import BleCommunicationType, CHSesame2Intention, CHSesame2Status
 from pysesameos2.crypto import BleCipher
 from pysesameos2.device import CHDeviceKey
-from pysesameos2.helper import CHSesameBotButtonMode, CHSesameBotMechSettings, CHSesameBotMechStatus, CHSesameBotUserPreDir
+from pysesameos2.helper import (
+    CHSesameBotButtonMode,
+    CHSesameBotMechSettings,
+    CHSesameBotMechStatus,
+    CHSesameBotUserPreDir,
+)
 
 if sys.version_info[:2] < (3, 8):
     from asynctest import patch
@@ -48,6 +53,7 @@ class TestCHSesameBotBleLoginResponse:
         assert r.getMechSetting().getLockSecConfig().getClickHoldSec() == 20
         assert r.getMechSetting().getLockSecConfig().getClickUnlockSec() == 15
         assert r.getMechSetting().getButtonMode() == CHSesameBotButtonMode.click
+
 
 class TestCHSesameBot:
     def test_CHSesameBot_RxBuffer(self):
@@ -119,7 +125,6 @@ class TestCHSesameBot:
 
         assert s.getIntention() == CHSesame2Intention.movingToUnknownTarget
 
-
     def test_CHSesameBot_MechSetting_raises_exception_on_invalid_argument(self):
         s = CHSesameBot()
         with pytest.raises(TypeError):
@@ -163,7 +168,9 @@ class TestCHSesameBot:
         assert s.getSesameToken().hex() == "ffffffff"
 
     @pytest.mark.asyncio
-    async def test_CHSesameBot_onCharacteristicChanged_ciphertext_without_setCipher(self):
+    async def test_CHSesameBot_onCharacteristicChanged_ciphertext_without_setCipher(
+        self,
+    ):
         s = CHSesameBot()
 
         assert (
