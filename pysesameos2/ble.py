@@ -2,7 +2,6 @@ import asyncio
 import base64
 import logging
 import uuid
-from datetime import datetime
 from typing import Dict, Optional, Tuple, Union
 
 from bleak import BleakScanner
@@ -18,11 +17,7 @@ from pysesameos2.const import (
     BlePacketType,
 )
 from pysesameos2.device import CHDevices
-from pysesameos2.helper import (
-    CHProductModel,
-    CHSesame2MechSettings,
-    CHSesame2MechStatus,
-)
+from pysesameos2.helper import CHProductModel
 
 logger = logging.getLogger(__name__)
 
@@ -292,38 +287,6 @@ class CHSesame2BleResponse:
         return self._payload
 
 
-class CHSesame2BleLoginResponse:
-    def __init__(self, data: bytes) -> None:
-        """A representation of a response for login operation.
-
-        Args:
-            data (bytes): The rawdata.
-        """
-        if not isinstance(data, bytes):
-            raise TypeError("Invalid data")
-
-        self._systemTime = datetime.fromtimestamp(int.from_bytes(data[0:4], "little"))
-        # ??? data[4:8]
-        self._SSM2MechSetting = CHSesame2MechSettings(rawdata=data[8:20])
-        self._SSM2MechStatus = CHSesame2MechStatus(rawdata=data[20:28])
-
-    def getMechSetting(self) -> CHSesame2MechSettings:
-        """Return a mechanical setting of a device.
-
-        Returns:
-            CHSesame2MechSettings: The mechanical settinng.
-        """
-        return self._SSM2MechSetting
-
-    def getMechStatus(self) -> CHSesame2MechStatus:
-        """Return a mechanical status of a device.
-
-        Returns:
-            CHSesame2MechStatus: The mechanical status.
-        """
-        return self._SSM2MechStatus
-
-
 class BLEAdvertisement:
     def __init__(self, dev: BLEDevice, manufacturer_data: dict) -> None:
         if not isinstance(dev, BLEDevice):
@@ -394,11 +357,6 @@ class CHBleManager:
 
         if SERVICE_UUID in dev.metadata["uuids"]:
             adv = BLEAdvertisement(dev, dev.metadata["manufacturer_data"])
-
-            # TODO: Support other devices.
-            if adv.getProductModel() != CHProductModel.SS2:
-                raise NotImplementedError("The device is not supported!")
-
             device = adv.getProductModel().deviceFactory()()
             device.setAdvertisement(adv)
 

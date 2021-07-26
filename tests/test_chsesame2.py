@@ -11,7 +11,7 @@ from pysesameos2.ble import (
     CHSesame2BleReceiver,
     CHSesame2BleTransmiter,
 )
-from pysesameos2.chsesame2 import CHSesame2
+from pysesameos2.chsesame2 import CHSesame2, CHSesame2BleLoginResponse
 from pysesameos2.const import BleCommunicationType, CHSesame2Intention, CHSesame2Status
 from pysesameos2.crypto import BleCipher
 from pysesameos2.device import CHDeviceKey
@@ -21,6 +21,27 @@ if sys.version_info[:2] < (3, 8):
     from asynctest import patch
 else:
     from unittest.mock import patch
+
+
+class TestCHSesame2BleLoginResponse:
+    def test_CHSesame2BleLoginResponse_raises_exception_on_missing_arguments(self):
+        with pytest.raises(TypeError):
+            CHSesame2BleLoginResponse()
+
+    def test_CHSesame2BleLoginResponse_raises_exception_on_invalid_arguments(self):
+        with pytest.raises(TypeError):
+            CHSesame2BleLoginResponse("INVALID-DATA")
+
+    def test_CHSesame2BleLoginResponse(self):
+        r = CHSesame2BleLoginResponse(
+            bytes.fromhex("f545d36001008001e30105034d0179026f029b035e03008016020002")
+        )
+
+        assert isinstance(r.getMechStatus(), CHSesame2MechStatus)
+        assert r.getMechStatus().isInLockRange()
+
+        assert isinstance(r.getMechSetting(), CHSesame2MechSettings)
+        assert r.getMechSetting().isConfigured
 
 
 class TestCHSesame2:
