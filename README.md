@@ -23,9 +23,12 @@ To be honest, this is my first time to use [`Bleak`](https://github.com/hbldh/bl
 * macOS 10.15.7, Python 3.9.5
 * Raspberry Pi Zero W (Raspbian GNU/Linux 10, Raspberry Pi reference 2021-05-07), Python 3.7.3
 
-## Features
+## Supported devices
 
-Please note that `pysesameos2` can only control [SESAME 3 Smart Lock](https://jp.candyhouse.co/products/sesame3) at this moment. Although all types of devices running Sesame OS2 are technically supportable, I don't actually have or need those devices. PRs are always welcome to help out!
+- [SESAME 3](https://jp.candyhouse.co/products/sesame3)
+- [SESAME bot](https://jp.candyhouse.co/products/sesame3-bot)
+
+## Features
 
 * Scan all SESAME locks using BLE advertisements.
 * Receive state changes (locked, handle position, etc.) that are actively reported from the device.
@@ -43,5 +46,6 @@ Please take a look at the [`example`](https://github.com/mochipon/pysesameos2/tr
 
 ## Credits & Thanks
 
-* A huge thank you to all at [CANDY HOUSE](https://jp.candyhouse.co/).
+* A huge thank you to all at [CANDY HOUSE](https://jp.candyhouse.co/) and their crowdfunding contributors!
+* Thanks to [@Chabiichi](https://github.com/Chabiichi)-san for [the offer](https://github.com/mochipon/pysesame3/issues/25) to get my SESAME bot!
 * Many thanks to [bleak](https://github.com/hbldh/bleak) and [pyzerproc](https://github.com/emlove/pyzerproc).
