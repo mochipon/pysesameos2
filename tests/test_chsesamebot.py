@@ -236,6 +236,11 @@ class TestCHSesameBot:
         )
         assert s.getDeviceStatus() == CHSesame2Status.Locked
 
+        assert (
+            str(s)
+            == "CHSesameBot(deviceUUID=None, deviceModel=CHProductModel.SesameBot1, mechStatus=CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0))"
+        )
+
     @pytest.mark.asyncio
     async def test_CHSesameBot_onGattSesamePublish_mechSetting(self):
         s = CHSesameBot()
@@ -266,6 +271,19 @@ class TestCHSesameBot:
         s = CHSesameBot()
         with pytest.raises(RuntimeError):
             await s.lock()
+
+    @pytest.mark.asyncio
+    async def test_CHSesameBot_click(self):
+        s = CHSesameBot()
+        s.setDeviceStatus(CHSesame2Status.Unlocked)
+
+        assert (await s.click()) is None
+
+    @pytest.mark.asyncio
+    async def test_CHSesameBot_click_raises_exception_on_no_device_connenction(self):
+        s = CHSesameBot()
+        with pytest.raises(RuntimeError):
+            await s.click()
 
     @pytest.mark.asyncio
     async def test_CHSesameBot_lock(self):

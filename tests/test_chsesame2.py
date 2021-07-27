@@ -242,6 +242,11 @@ class TestCHSesame2:
         )
         assert s.getDeviceStatus() == CHSesame2Status.Locked
 
+        assert (
+            str(s)
+            == "CHSesame2(deviceUUID=None, deviceModel=CHProductModel.SS2, mechStatus=CHSesame2MechStatus(Battery=100% (6.08V), isInLockRange=True, isInUnlockRange=False, Position=-13))"
+        )
+
     @pytest.mark.asyncio
     async def test_CHSesame2_onGattSesamePublish_mechSetting(self):
         s = CHSesame2()

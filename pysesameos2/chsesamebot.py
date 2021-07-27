@@ -30,6 +30,7 @@ from pysesameos2.const import (
 from pysesameos2.crypto import AppKeyFactory, BleCipher
 from pysesameos2.device import CHSesameLock
 from pysesameos2.helper import (
+    CHProductModel,
     CHSesameBotMechSettings,
     CHSesameBotMechStatus,
     HistoryTagHelper,
@@ -79,6 +80,7 @@ class CHSesameBot(CHSesameLock):
     def __init__(self) -> None:
         """SESAME bot Device Specific Implementation."""
         super().__init__()
+        self.setProductModel(CHProductModel.SesameBot1)
         self._rxBuffer = CHSesame2BleReceiver()
         self._txBuffer: Optional[CHSesame2BleTransmiter] = None
         self._mechStatus: Optional[CHSesameBotMechStatus] = None
@@ -117,8 +119,6 @@ class CHSesameBot(CHSesameLock):
         logger.debug(f"setMechStatus: {str(status)}")
         self._mechStatus = status
 
-        if status is None:
-            self.setIntention(CHSesame2Intention.movingToUnknownTarget)
         if status.getMotorStatus() == 0:
             self.setIntention(CHSesame2Intention.idle)
         elif status.getMotorStatus() == 1:

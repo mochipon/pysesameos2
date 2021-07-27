@@ -30,6 +30,7 @@ from pysesameos2.const import (
 from pysesameos2.crypto import AppKeyFactory, BleCipher
 from pysesameos2.device import CHSesameLock
 from pysesameos2.helper import (
+    CHProductModel,
     CHSesame2MechSettings,
     CHSesame2MechStatus,
     HistoryTagHelper,
@@ -78,6 +79,7 @@ class CHSesame2(CHSesameLock):
     def __init__(self) -> None:
         """SESAME3 Device Specific Implementation."""
         super().__init__()
+        self.setProductModel(CHProductModel.SS2)
         self._rxBuffer = CHSesame2BleReceiver()
         self._txBuffer: Optional[CHSesame2BleTransmiter] = None
         self._mechStatus: Optional[CHSesame2MechStatus] = None
