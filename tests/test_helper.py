@@ -72,10 +72,10 @@ class TestCHSesameProtocolMechStatus:
 
     def test_CHSesame2MechStatus(self):
         status = CHSesameProtocolMechStatus(rawdata="60030080f3ff0002")
-        assert status.getBatteryVoltage() == 6.0809384164222875
+        assert status.isInLockRange()
 
         status = CHSesameProtocolMechStatus(rawdata=bytes.fromhex("60030080f3ff0002"))
-        assert status.getBatteryVoltage() == 6.0809384164222875
+        assert status.isInLockRange()
 
 
 class TestCHSesame2MechStatus:
@@ -168,30 +168,38 @@ class TestCHSesameBotMechStatus:
         status = CHSesameBotMechStatus(rawdata="5503000000000102")
 
         assert status.getBatteryPrecentage() == 100.0
-        assert status.getBatteryVoltage() == 6.003519061583578
+        assert status.getBatteryVoltage() == 3.001759530791789
         assert status.isInLockRange()
         assert not status.isInUnlockRange()
         assert status.getMotorStatus() == 0
         assert (
-            str(status) == "CHSesameBotMechStatus(Battery=100% (6.00V), motorStatus=0)"
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
         )
 
         status = CHSesameBotMechStatus(rawdata=bytes.fromhex("5503000000000102"))
         assert (
-            str(status) == "CHSesameBotMechStatus(Battery=100% (6.00V), motorStatus=0)"
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
         )
 
     def test_CHSesameBotMechStatus_rawdata_unlocked(self):
         status = CHSesameBotMechStatus(rawdata="5503000000000104")
 
         assert status.getBatteryPrecentage() == 100.0
-        assert status.getBatteryVoltage() == 6.003519061583578
+        assert status.getBatteryVoltage() == 3.001759530791789
         assert not status.isInLockRange()
         assert status.isInUnlockRange()
         assert status.getMotorStatus() == 0
         assert (
-            str(status) == "CHSesameBotMechStatus(Battery=100% (6.00V), motorStatus=0)"
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
         )
+
+    def test_CHSesameBotMechStatus_rawdata_lowpower(self):
+        status = CHSesameBotMechStatus(rawdata="3003000000000102")
+        assert status.getBatteryPrecentage() == 44
+        assert status.getBatteryVoltage() == 2.8715542521994135
+
+        status2 = CHSesameBotMechStatus(rawdata="4802000000000102")
+        assert status2.getBatteryPrecentage() == 0
 
 
 class TestCHSesameBotMechSettings:

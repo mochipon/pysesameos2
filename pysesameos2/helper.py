@@ -99,43 +99,13 @@ class CHSesameProtocolMechStatus:
             raise TypeError("Invalid SesameProtocolMechStatus")
 
         self._data = data
-        self._batteryVoltage = int.from_bytes(data[0:2], "little") * 7.2 / 1023
+        self._batteryVoltage: float
         self._target: int
         self._position: int
         self._retcode: int
-        self._isInLockRange: bool
-        self._isInUnlockRange: bool
-        self._isBatteryCritical: bool
-
-    def getBatteryPrecentage(self) -> int:
-        """Return battery status information as a percentage.
-
-        Returns:
-            int: Battery power left as a percentage.
-        """
-        list_vol = [6.0, 5.8, 5.7, 5.6, 5.4, 5.2, 5.1, 5.0, 4.8, 4.6]
-        list_pct = [100.0, 50.0, 40.0, 32.0, 21.0, 13.0, 10.0, 7.0, 3.0, 0.0]
-        cur_vol = self._batteryVoltage
-
-        if cur_vol >= list_vol[0]:
-            return 100
-        elif cur_vol <= list_vol[-1]:
-            return 0
-        else:
-            ret = 0
-            i = 0
-            while i < len(list_vol) - 1:
-                if cur_vol > list_vol[i] or cur_vol <= list_vol[i + 1]:
-                    i = i + 1
-                    continue
-                else:
-                    f = (cur_vol - list_vol[i + 1]) / (list_vol[i] - list_vol[i + 1])
-                    f3 = list_pct[i]
-                    f4 = list_pct[i + 1]
-                    ret = int(f4 + (f * (f3 - f4)))
-                    break
-
-            return ret
+        self._isInLockRange = data[7] & 2 > 0
+        self._isInUnlockRange = data[7] & 4 > 0
+        self._isBatteryCritical = data[7] & 32 > 0
 
     def getBatteryVoltage(self) -> float:
         """Return battery status information as a voltage.
@@ -201,15 +171,98 @@ class CHSesame2MechStatus(CHSesameProtocolMechStatus):
             raise TypeError("Invalid CHSesame2MechStatus")
 
         super().__init__(rawdata=data)
+        self._batteryVoltage = int.from_bytes(data[0:2], "little") * 7.2 / 1023
         self._target = int.from_bytes(data[2:4], "little", signed=True)
         self._position = int.from_bytes(data[4:6], "little", signed=True)
         self._retcode = data[6]
-        self._isInLockRange = data[7] & 2 > 0
-        self._isInUnlockRange = data[7] & 4 > 0
-        self._isBatteryCritical = data[7] & 32 > 0
+
+    def getBatteryPrecentage(self) -> int:
+        """Return battery status information as a percentage.
+
+        Returns:
+            int: Battery power left as a percentage.
+        """
+        list_vol = [6.0, 5.8, 5.7, 5.6, 5.4, 5.2, 5.1, 5.0, 4.8, 4.6]
+        list_pct = [100.0, 50.0, 40.0, 32.0, 21.0, 13.0, 10.0, 7.0, 3.0, 0.0]
+        cur_vol = self._batteryVoltage
+
+        if cur_vol >= list_vol[0]:
+            return 100
+        elif cur_vol <= list_vol[-1]:
+            return 0
+        else:
+            ret = 0
+            i = 0
+            while i < len(list_vol) - 1:
+                if cur_vol > list_vol[i] or cur_vol <= list_vol[i + 1]:
+                    i = i + 1
+                    continue
+                else:
+                    f = (cur_vol - list_vol[i + 1]) / (list_vol[i] - list_vol[i + 1])
+                    f3 = list_pct[i]
+                    f4 = list_pct[i + 1]
+                    ret = int(f4 + (f * (f3 - f4)))
+                    break
+
+            return ret
 
     def __str__(self) -> str:
         return f"CHSesame2MechStatus(Battery={self.getBatteryPrecentage()}% ({self.getBatteryVoltage():.2f}V), isInLockRange={self.isInLockRange()}, isInUnlockRange={self.isInUnlockRange()}, Position={self.getPosition()})"
+
+
+class CHSesameBotMechStatus(CHSesameProtocolMechStatus):
+    def __init__(self, rawdata: Union[bytes, str]) -> None:
+        """Represent a mechanical status of a SESAME bot.
+
+        Args:
+            rawdata (Union[bytes, str]): The rawdata from the device.
+        """
+        if isinstance(rawdata, str):
+            data = bytes.fromhex(rawdata)
+        elif isinstance(rawdata, bytes):
+            data = rawdata
+        else:
+            raise TypeError("Invalid CHSesameBotMechStatus")
+
+        super().__init__(rawdata=data)
+        self._batteryVoltage = int.from_bytes(data[0:2], "little") * 3.6 / 1023
+        self._motorStatus = data[4]
+
+    def getBatteryPrecentage(self) -> int:
+        """Return battery status information as a percentage.
+
+        Returns:
+            int: Battery power left as a percentage.
+        """
+        list_vol = [3.0, 2.9, 2.85, 2.8, 2.7, 2.6, 2.55, 2.5, 2.4, 2.3]
+        list_pct = [100.0, 50.0, 40.0, 32.0, 21.0, 13.0, 10.0, 7.0, 3.0, 0.0]
+        cur_vol = self._batteryVoltage
+
+        if cur_vol >= list_vol[0]:
+            return 100
+        elif cur_vol <= list_vol[-1]:
+            return 0
+        else:
+            ret = 0
+            i = 0
+            while i < len(list_vol) - 1:
+                if cur_vol > list_vol[i] or cur_vol <= list_vol[i + 1]:
+                    i = i + 1
+                    continue
+                else:
+                    f = (cur_vol - list_vol[i + 1]) / (list_vol[i] - list_vol[i + 1])
+                    f3 = list_pct[i]
+                    f4 = list_pct[i + 1]
+                    ret = int(f4 + (f * (f3 - f4)))
+                    break
+
+            return ret
+
+    def getMotorStatus(self) -> int:
+        return self._motorStatus
+
+    def __str__(self) -> str:
+        return f"CHSesameBotMechStatus(Battery={self.getBatteryPrecentage()}% ({self.getBatteryVoltage():.2f}V), motorStatus={self.getMotorStatus()})"
 
 
 class CHSesame2MechSettings:
@@ -257,33 +310,6 @@ class CHSesame2MechSettings:
 
     def __str__(self) -> str:
         return f"CHSesame2MechSettings(LockPosition={self.getLockPosition()}, UnlockPosition={self.getUnlockPosition()}, isConfigured={self.isConfigured})"
-
-
-class CHSesameBotMechStatus(CHSesameProtocolMechStatus):
-    def __init__(self, rawdata: Union[bytes, str]) -> None:
-        """Represent a mechanical status of a SESAME bot.
-
-        Args:
-            rawdata (Union[bytes, str]): The rawdata from the device.
-        """
-        if isinstance(rawdata, str):
-            data = bytes.fromhex(rawdata)
-        elif isinstance(rawdata, bytes):
-            data = rawdata
-        else:
-            raise TypeError("Invalid CHSesameBotMechStatus")
-
-        super().__init__(rawdata=data)
-        self._motorStatus = data[4]
-        self._isInLockRange = data[7] & 2 > 0
-        self._isInUnlockRange = data[7] & 4 > 0
-        self._isBatteryCritical = data[7] & 32 > 0
-
-    def getMotorStatus(self) -> int:
-        return self._motorStatus
-
-    def __str__(self) -> str:
-        return f"CHSesameBotMechStatus(Battery={self.getBatteryPrecentage()}% ({self.getBatteryVoltage():.2f}V), motorStatus={self.getMotorStatus()})"
 
 
 class CHSesameBotMechSettings:
