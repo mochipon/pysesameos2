@@ -4,8 +4,8 @@ import platform
 from concurrent.futures import ThreadPoolExecutor
 
 from pysesameos2.ble import CHBleManager
-from pysesameos2.chsesame2 import CHSesame2
-from pysesameos2.device import CHDeviceKey
+from pysesameos2.device import CHDeviceKey, CHSesameLock
+from pysesameos2.helper import CHSesame2MechStatus, CHSesameBotMechStatus
 
 # In order to understand the details of pysesameos2,
 # here we dare to show the detailed logs.
@@ -20,7 +20,7 @@ async def ainput(prompt: str) -> str:
         return await asyncio.get_event_loop().run_in_executor(executor, input, prompt)
 
 
-def on_sesame_statechanged(device: CHSesame2) -> None:
+def on_sesame_statechanged(device: CHSesameLock) -> None:
     mech_status = device.getMechStatus()
     device_status = device.getDeviceStatus()
 
@@ -44,7 +44,10 @@ def on_sesame_statechanged(device: CHSesame2) -> None:
         print("Battery: {:.2f}V".format(mech_status.getBatteryVoltage()))
         print("isInLockRange: {}".format(mech_status.isInLockRange()))
         print("isInUnlockRange: {}".format(mech_status.isInUnlockRange()))
-        print("Position: {}".format(mech_status.getPosition()))
+        if isinstance(mech_status, CHSesame2MechStatus):
+            print("Position: {}".format(mech_status.getPosition()))
+        if isinstance(mech_status, CHSesameBotMechStatus):
+            print("Motor Status: {}".format(mech_status.getMotorStatus()))
     print("=" * 10)
 
 
@@ -117,7 +120,7 @@ async def connect(scan_duration: int = 15):
     print("=" * 10)
     print("[Prompt]")
     while True:
-        val = await ainput("Action [lock/unlock/toggle]: ")
+        val = await ainput("Action [lock/unlock/toggle/click]: ")
 
         if val == "lock":
             await device.lock(history_tag="My Script")
@@ -125,6 +128,8 @@ async def connect(scan_duration: int = 15):
             await device.unlock(history_tag="日本語もOK")
         elif val == "toggle":
             await device.toggle(history_tag="My Script")
+        elif val == "click":
+            await device.click(history_tag="日本語もOK")
         else:
             continue
 

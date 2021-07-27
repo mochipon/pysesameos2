@@ -12,7 +12,6 @@ from bleak.exc import BleakError
 from pysesameos2.ble import (
     BLEAdvertisement,
     CHBleManager,
-    CHSesame2BleLoginResponse,
     CHSesame2BleNotify,
     CHSesame2BlePayload,
     CHSesame2BlePublish,
@@ -172,27 +171,6 @@ class TestCHSesame2BleResponse:
         assert r.getPayload() == bytes(0)
 
 
-class TestCHSesame2BleLoginResponse:
-    def test_CHSesame2BleLoginResponse_raises_exception_on_missing_arguments(self):
-        with pytest.raises(TypeError):
-            CHSesame2BleLoginResponse()
-
-    def test_CHSesame2BleLoginResponse_raises_exception_on_invalid_arguments(self):
-        with pytest.raises(TypeError):
-            CHSesame2BleLoginResponse("INVALID-DATA")
-
-    def test_CHSesame2BleLoginResponse(self):
-        r = CHSesame2BleLoginResponse(
-            bytes.fromhex("f545d36001008001e30105034d0179026f029b035e03008016020002")
-        )
-
-        assert isinstance(r.getMechStatus(), CHSesame2MechStatus)
-        assert r.getMechStatus().isInLockRange()
-
-        assert isinstance(r.getMechSetting(), CHSesame2MechSettings)
-        assert r.getMechSetting().isConfigured
-
-
 class TestBLEAdvertisement:
     def test_BLEAdvertisement_raises_exception_on_missing_arguments(self):
         with pytest.raises(TypeError):
@@ -248,7 +226,7 @@ class TestCHBleManager:
                 "0000fd81-0000-1000-8000-00805f9b34fb",
             ],
             rssi=-60,
-            manufacturer_data={1370: b"\x02\x00\x01"},
+            manufacturer_data={1370: b"\xff\x00\x01"},
         )
 
         with pytest.raises(NotImplementedError):
@@ -280,7 +258,7 @@ class TestCHBleManager:
                         "0000fd81-0000-1000-8000-00805f9b34fb",
                     ],
                     rssi=-60,
-                    manufacturer_data={1370: b"\x02\x00\x01"},
+                    manufacturer_data={1370: b"\xff\x00\x01"},
                 ),
                 BLEDevice(
                     "AA:BB:CC:44:55:66",
@@ -444,7 +422,7 @@ class TestCHBleManager:
                         "0000fd81-0000-1000-8000-00805f9b34fb",
                     ],
                     rssi=-60,
-                    manufacturer_data={1370: b"\x02\x00\x01"},
+                    manufacturer_data={1370: b"\xff\x00\x01"},
                 )
             ]
 

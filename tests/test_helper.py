@@ -8,6 +8,12 @@ from pysesameos2.helper import (
     CHProductModel,
     CHSesame2MechSettings,
     CHSesame2MechStatus,
+    CHSesameBotButtonMode,
+    CHSesameBotLockSecondsConfiguration,
+    CHSesameBotMechSettings,
+    CHSesameBotMechStatus,
+    CHSesameBotUserPreDir,
+    CHSesameProtocolMechStatus,
     HistoryTagHelper,
 )
 
@@ -55,6 +61,23 @@ class TestCHProductModel:
         assert CHProductModel.getByValue(0) is CHProductModel.SS2
 
 
+class TestCHSesameProtocolMechStatus:
+    def test_CHSesameProtocolMechStatus_raises_exception_on_emtry_arguments(self):
+        with pytest.raises(TypeError):
+            CHSesameProtocolMechStatus()
+
+    def test_CHSesameProtocolMechStatus_raises_exception_on_non_string_argument(self):
+        with pytest.raises(TypeError):
+            CHSesameProtocolMechStatus(10)
+
+    def test_CHSesameProtocolMechStatus(self):
+        status = CHSesameProtocolMechStatus(rawdata="60030080f3ff0002")
+        assert status.isInLockRange()
+
+        status = CHSesameProtocolMechStatus(rawdata=bytes.fromhex("60030080f3ff0002"))
+        assert status.isInLockRange()
+
+
 class TestCHSesame2MechStatus:
     def test_CHSesame2MechStatus_raises_exception_on_emtry_arguments(self):
         with pytest.raises(TypeError):
@@ -74,6 +97,12 @@ class TestCHSesame2MechStatus:
         assert status.getTarget() == -32768
         assert status.isInLockRange()
         assert not status.isInUnlockRange()
+        assert (
+            str(status)
+            == "CHSesame2MechStatus(Battery=100% (6.08V), isInLockRange=True, isInUnlockRange=False, Position=-13)"
+        )
+
+        status = CHSesame2MechStatus(rawdata=bytes.fromhex("60030080f3ff0002"))
         assert (
             str(status)
             == "CHSesame2MechStatus(Battery=100% (6.08V), isInLockRange=True, isInUnlockRange=False, Position=-13)"
@@ -124,6 +153,104 @@ class TestCHSesame2MechSettings:
             str(setting)
             == "CHSesame2MechSettings(LockPosition=-17, UnlockPosition=284, isConfigured=True)"
         )
+
+
+class TestCHSesameBotMechStatus:
+    def test_CHSesameBotMechStatus_raises_exception_on_emtry_arguments(self):
+        with pytest.raises(TypeError):
+            CHSesameBotMechStatus()
+
+    def test_CHSesameBotMechStatus_raises_exception_on_non_string_argument(self):
+        with pytest.raises(TypeError):
+            CHSesameBotMechStatus(10)
+
+    def test_CHSesameBotMechStatus_rawdata_locked(self):
+        status = CHSesameBotMechStatus(rawdata="5503000000000102")
+
+        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryVoltage() == 3.001759530791789
+        assert status.isInLockRange()
+        assert not status.isInUnlockRange()
+        assert status.getMotorStatus() == 0
+        assert (
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
+        )
+
+        status = CHSesameBotMechStatus(rawdata=bytes.fromhex("5503000000000102"))
+        assert (
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
+        )
+
+    def test_CHSesameBotMechStatus_rawdata_unlocked(self):
+        status = CHSesameBotMechStatus(rawdata="5503000000000104")
+
+        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryVoltage() == 3.001759530791789
+        assert not status.isInLockRange()
+        assert status.isInUnlockRange()
+        assert status.getMotorStatus() == 0
+        assert (
+            str(status) == "CHSesameBotMechStatus(Battery=100% (3.00V), motorStatus=0)"
+        )
+
+    def test_CHSesameBotMechStatus_rawdata_lowpower(self):
+        status = CHSesameBotMechStatus(rawdata="3003000000000102")
+        assert status.getBatteryPrecentage() == 44
+        assert status.getBatteryVoltage() == 2.8715542521994135
+
+        status2 = CHSesameBotMechStatus(rawdata="4802000000000102")
+        assert status2.getBatteryPrecentage() == 0
+
+
+class TestCHSesameBotMechSettings:
+    def test_CHSesameBotMechSettings_raises_exception_on_emtry_arguments(self):
+        with pytest.raises(TypeError):
+            CHSesameBotMechSettings()
+
+    def test_CHSesameBotMechSettings_raises_exception_on_non_string_argument(self):
+        with pytest.raises(TypeError):
+            CHSesameBotMechSettings(10)
+
+    def test_CHSesameBotMechSettings(self):
+        setting = CHSesameBotMechSettings(
+            rawdata=bytes.fromhex("010a0a0a140f000000000000")
+        )
+
+        assert setting.getUserPrefDir() == CHSesameBotUserPreDir.reversed
+        assert setting.getLockSecConfig().getLockSec() == 10
+        assert setting.getLockSecConfig().getUnlockSec() == 10
+        assert setting.getLockSecConfig().getClickLockSec() == 10
+        assert setting.getLockSecConfig().getClickHoldSec() == 20
+        assert setting.getLockSecConfig().getClickUnlockSec() == 15
+        assert setting.getButtonMode() == CHSesameBotButtonMode.click
+
+        assert (
+            str(setting)
+            == "CHSesameBotMechSettings(userPrefDir=CHSesameBotUserPreDir.reversed, lockSec=10, unlockSec=10, clickLockSec=10, clickHoldSec=20, clickUnlockSec=15, buttonMode=CHSesameBotButtonMode.click)"
+        )
+
+
+class TestCHSesameBotLockSecondsConfiguration:
+    def test_CHSesameBotLockSecondsConfiguration_raises_exception_on_emtry_arguments(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            CHSesameBotLockSecondsConfiguration()
+
+    def test_CHSesameBotLockSecondsConfiguration_raises_exception_on_non_string_argument(
+        self,
+    ):
+        with pytest.raises(TypeError):
+            CHSesameBotLockSecondsConfiguration(10)
+
+    def test_CHSesameBotLockSecondsConfiguration(self):
+        c = CHSesameBotLockSecondsConfiguration(rawdata="0a0a0a140f")
+
+        assert c.getLockSec() == 10
+        assert c.getUnlockSec() == 10
+        assert c.getClickLockSec() == 10
+        assert c.getClickHoldSec() == 20
+        assert c.getClickUnlockSec() == 15
 
 
 class TestHistoryTagHelper:
