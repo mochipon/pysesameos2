@@ -2,10 +2,14 @@ import asyncio
 import logging
 import platform
 from concurrent.futures import ThreadPoolExecutor
+from typing import TYPE_CHECKING
 
 from pysesameos2.ble import CHBleManager
-from pysesameos2.device import CHDeviceKey, CHSesameLock
-from pysesameos2.helper import CHSesame2MechStatus, CHSesameBotMechStatus
+from pysesameos2.device import CHDeviceKey
+from pysesameos2.helper import CHProductModel
+
+if TYPE_CHECKING:
+    from pysesameos2.device import CHSesameLock
 
 # In order to understand the details of pysesameos2,
 # here we dare to show the detailed logs.
@@ -20,13 +24,14 @@ async def ainput(prompt: str) -> str:
         return await asyncio.get_event_loop().run_in_executor(executor, input, prompt)
 
 
-def on_sesame_statechanged(device: CHSesameLock) -> None:
+def on_sesame_statechanged(device: "CHSesameLock") -> None:
     mech_status = device.getMechStatus()
     device_status = device.getDeviceStatus()
 
     print("=" * 10)
     print("Device status is updated!")
     print("UUID: {}".format(device.getDeviceUUID()))
+    print("Product Model: {}".format(device.productModel))
     print("Device status: {}".format(device_status))
 
     """
@@ -44,9 +49,9 @@ def on_sesame_statechanged(device: CHSesameLock) -> None:
         print("Battery: {:.2f}V".format(mech_status.getBatteryVoltage()))
         print("isInLockRange: {}".format(mech_status.isInLockRange()))
         print("isInUnlockRange: {}".format(mech_status.isInUnlockRange()))
-        if isinstance(mech_status, CHSesame2MechStatus):
+        if device.productModel == CHProductModel.SS2:
             print("Position: {}".format(mech_status.getPosition()))
-        if isinstance(mech_status, CHSesameBotMechStatus):
+        elif device.productModel == CHProductModel.SesameBot1:
             print("Motor Status: {}".format(mech_status.getMotorStatus()))
     print("=" * 10)
 
@@ -122,16 +127,19 @@ async def connect(scan_duration: int = 15):
     while True:
         val = await ainput("Action [lock/unlock/toggle/click]: ")
 
-        if val == "lock":
-            await device.lock(history_tag="My Script")
-        elif val == "unlock":
-            await device.unlock(history_tag="日本語もOK")
-        elif val == "toggle":
-            await device.toggle(history_tag="My Script")
-        elif val == "click":
-            await device.click(history_tag="日本語もOK")
-        else:
-            continue
+        if device.productModel == CHProductModel.SS2:
+            if val == "lock":
+                await device.lock(history_tag="My Script")
+            elif val == "unlock":
+                await device.unlock(history_tag="日本語もOK")
+            elif val == "toggle":
+                await device.toggle(history_tag="My Script")
+
+        if device.productModel == CHProductModel.SesameBot1:
+            if val == "click":
+                await device.click(history_tag="日本語もOK")
+
+        continue
 
 
 if __name__ == "__main__":
