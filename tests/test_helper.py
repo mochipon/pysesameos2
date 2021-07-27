@@ -70,7 +70,7 @@ class TestCHSesameProtocolMechStatus:
         with pytest.raises(TypeError):
             CHSesameProtocolMechStatus(10)
 
-    def test_CHSesame2MechStatus(self):
+    def test_CHSesameProtocolMechStatus(self):
         status = CHSesameProtocolMechStatus(rawdata="60030080f3ff0002")
         assert status.isInLockRange()
 
