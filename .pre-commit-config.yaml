@@ -18,7 +18,7 @@ repos:
     - id: trailing-whitespace
     - id: mixed-line-ending
 -   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.9.2
+    rev: v5.9.3
     hooks:
     - id: isort
       files: \.py$
