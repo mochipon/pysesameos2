@@ -29,6 +29,12 @@ class CHProductModel(Enum):
         "productType": 0,
         "deviceFactory": "CHSesame2",
     }
+    SS4: ProductData = {
+        "deviceModel": "sesame_4",
+        "isLocker": True,
+        "productType": 4,
+        "deviceFactory": "CHSesame2",
+    }
     SesameBot1: ProductData = {
         "deviceModel": "ssmbot_1",
         "isLocker": True,

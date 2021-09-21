@@ -1,6 +1,6 @@
 # pysesameos2
 
-_Unofficial Python Library to communicate with SESAME 3 series products via Bluetooth connection._
+_Unofficial Python Library to communicate with SESAME products via Bluetooth._
 
 [![PyPI](https://img.shields.io/pypi/v/pysesameos2)](https://pypi.python.org/pypi/pysesameos2)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pysesameos2)
@@ -11,7 +11,7 @@ _Unofficial Python Library to communicate with SESAME 3 series products via Blue
 
 ## Introduction
 
-This project aims to control smart devices running **Sesame OS2** via **Bluetooth connection**. If you want to control them via the cloud service, please check [pysesame3](https://github.com/mochipon/pysesame3).
+This project aims to control smart devices running **Sesame OS2** via **Bluetooth**. If you want to control them via the cloud service, please check [pysesame3](https://github.com/mochipon/pysesame3).
 
 To be honest, this is my first time to use [`Bleak`](https://github.com/hbldh/bleak) which provides an asynchronous, cross-platform Bluetooth API. PRs are heavily welcome.
 
@@ -26,6 +26,7 @@ To be honest, this is my first time to use [`Bleak`](https://github.com/hbldh/bl
 ## Supported devices
 
 - [SESAME 3](https://jp.candyhouse.co/products/sesame3)
+- [SESAME 4](https://jp.candyhouse.co/products/sesame4)
 - [SESAME bot](https://jp.candyhouse.co/products/sesame3-bot)
 
 ## Features
@@ -43,6 +44,26 @@ To be honest, this is my first time to use [`Bleak`](https://github.com/hbldh/bl
 ## Usage
 
 Please take a look at the [`example`](https://github.com/mochipon/pysesameos2/tree/main/example) directory.
+
+## Related Projects
+
+### Libraries
+| Name | Lang | Communication Method |
+----|----|----
+| [pysesame](https://github.com/trisk/pysesame) | Python | [Sesame API v1/v2](https://docs.candyhouse.co/v1.html)
+| [pysesame2](https://github.com/yagami-cerberus/pysesame2) | Python | [Sesame API v3](https://docs.candyhouse.co/)
+| [pysesame3](https://github.com/mochipon/pysesame3) | Python | [Web API](https://doc.candyhouse.co/ja/SesameAPI), [CognitoAuth (The official android SDK reverse-engineered)](https://doc.candyhouse.co/ja/android)
+| [pysesameos2](https://github.com/mochipon/pysesameos2) | Python | [Bluetooth](https://doc.candyhouse.co/ja/android)
+
+### Integrations
+| Name | Description | Communication Method |
+----|----|----
+| [doorman](https://github.com/jp7eph/doorman) | Control SESAME3 from Homebridge by MQTT | [Web API](https://doc.candyhouse.co/ja/SesameAPI)
+| [Doorlock](https://github.com/kishikawakatsumi/Doorlock) | iOS widget for Sesame 3 smart lock | [Web API](https://doc.candyhouse.co/ja/SesameAPI)
+| [gopy-sesame3](https://github.com/orangekame3/gopy-sesame3) | NFC (Felica) integration | [Web API](https://doc.candyhouse.co/ja/SesameAPI)
+| [homebridge-open-sesame](https://github.com/yasuoza/homebridge-open-sesame) | Homebridge plugin for SESAME3 | Cognito integration
+| [homebridge-sesame-os2](https://github.com/nzws/homebridge-sesame-os2) | Homebridge Plugin for SESAME OS2 (SESAME3) | [Web API](https://doc.candyhouse.co/ja/SesameAPI)
+| [sesame3-webhook](https://github.com/kunikada/sesame3-webhook) | Send SESAME3 status to specified url. (HTTP Post) | CognitoAuth (based on `pysesame3`)
 
 ## Credits & Thanks
 

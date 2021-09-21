@@ -127,7 +127,7 @@ async def connect(scan_duration: int = 15):
     while True:
         val = await ainput("Action [lock/unlock/toggle/click]: ")
 
-        if device.productModel == CHProductModel.SS2:
+        if device.productModel in [CHProductModel.SS2, CHProductModel.SS4]:
             if val == "lock":
                 await device.lock(history_tag="My Script")
             elif val == "unlock":
