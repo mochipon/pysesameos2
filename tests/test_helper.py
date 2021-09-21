@@ -30,6 +30,13 @@ class TestCHProductModel:
         assert ss2.productType() == 0
         assert ss2.deviceFactory().__name__ == "CHSesame2"
 
+    def test_CHProductModel_SS4(self):
+        ss2 = CHProductModel.SS4
+        assert ss2.deviceModel() == "sesame_4"
+        assert ss2.isLocker()
+        assert ss2.productType() == 4
+        assert ss2.deviceFactory().__name__ == "CHSesame2"
+
     def test_CHProductModel_WM2(self):
         wm2 = CHProductModel.WM2
         assert wm2.deviceModel() == "wm_2"

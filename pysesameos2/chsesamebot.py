@@ -80,7 +80,6 @@ class CHSesameBot(CHSesameLock):
     def __init__(self) -> None:
         """SESAME bot Device Specific Implementation."""
         super().__init__()
-        self.setProductModel(CHProductModel.SesameBot1)
         self._rxBuffer = CHSesame2BleReceiver()
         self._txBuffer: Optional[CHSesame2BleTransmiter] = None
         self._mechStatus: Optional[CHSesameBotMechStatus] = None

@@ -16,6 +16,7 @@ from pysesameos2.const import BleCommunicationType, CHSesame2Intention, CHSesame
 from pysesameos2.crypto import BleCipher
 from pysesameos2.device import CHDeviceKey
 from pysesameos2.helper import (
+    CHProductModel,
     CHSesameBotButtonMode,
     CHSesameBotMechSettings,
     CHSesameBotMechStatus,
@@ -227,6 +228,7 @@ class TestCHSesameBot:
     @pytest.mark.asyncio
     async def test_CHSesameBot_onGattSesamePublish_mechStatus(self):
         s = CHSesameBot()
+        s.setProductModel(CHProductModel.SesameBot1)
 
         publish_payload = CHSesame2BlePublish(bytes.fromhex("515503000000000102"))
 
