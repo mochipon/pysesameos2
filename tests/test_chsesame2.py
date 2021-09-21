@@ -15,7 +15,11 @@ from pysesameos2.chsesame2 import CHSesame2, CHSesame2BleLoginResponse
 from pysesameos2.const import BleCommunicationType, CHSesame2Intention, CHSesame2Status
 from pysesameos2.crypto import BleCipher
 from pysesameos2.device import CHDeviceKey
-from pysesameos2.helper import CHSesame2MechSettings, CHSesame2MechStatus
+from pysesameos2.helper import (
+    CHProductModel,
+    CHSesame2MechSettings,
+    CHSesame2MechStatus,
+)
 
 if sys.version_info[:2] < (3, 8):
     from asynctest import patch
@@ -233,6 +237,7 @@ class TestCHSesame2:
     @pytest.mark.asyncio
     async def test_CHSesame2_onGattSesamePublish_mechStatus(self):
         s = CHSesame2()
+        s.setProductModel(CHProductModel.SS2)
 
         publish_payload = CHSesame2BlePublish(bytes.fromhex("5160030080f3ff0002"))
 
