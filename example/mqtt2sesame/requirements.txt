@@ -1,3 +1,4 @@
 paho-mqtt==1.6.1
 pysesameos2
 PyYAML==6.0
+tendo
