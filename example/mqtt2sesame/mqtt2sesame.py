@@ -6,6 +6,7 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Dict
 
+import tendo.singleton
 import paho.mqtt.client as mqtt
 import yaml
 
@@ -202,6 +203,12 @@ def main():
     )
     args = parser.parse_args()
     logger.setLevel(level=args.loglevel)
+    
+    try:
+        me = tendo.singleton.SingleInstance()
+    except tendo.singleton.SingleInstanceException:
+        logger.debug("Another instance is already runnning, quitting.")
+        return
 
     try:
         asyncio.run(runner())
