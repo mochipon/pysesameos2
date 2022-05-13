@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import inspect
 import logging
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, NamedTuple, Optional
 
 import paho.mqtt.client as mqtt
 import yaml
@@ -13,6 +13,9 @@ from pysesameos2.ble import CHBleManager
 from pysesameos2.const import CHDeviceLoginStatus, CHSesame2Status
 
 if TYPE_CHECKING:
+    from paho.mqtt.client import MQTTMessage
+
+    from pysesameos2.chsesame2 import CHSesame2
     from pysesameos2.device import CHDevices
 
 
@@ -27,7 +30,12 @@ cmd_queue = None
 connected_devices = None
 
 
-async def connect_sesame(ble_device_identifier: str, **kwargs) -> CHDevices:
+class Sesame2Device(NamedTuple):
+    device: CHSesame2
+    ble_uuid: str
+
+
+async def connect_sesame(ble_device_identifier: str, **kwargs) -> CHSesame2:
     blem = CHBleManager()
 
     device = await blem.scan_by_address(
@@ -35,6 +43,8 @@ async def connect_sesame(ble_device_identifier: str, **kwargs) -> CHDevices:
     )
     if device is None:
         raise ConnectionRefusedError("Failed in scanning the device.")
+    if not isinstance(device, CHSesame2):
+        raise ValueError("Not a CHSesame2 device.")
 
     device.setDeviceStatusCallback(onSesameStateChanged)
     device.getKey().setSecretKey(kwargs.get("secret_key"))
@@ -46,14 +56,16 @@ async def connect_sesame(ble_device_identifier: str, **kwargs) -> CHDevices:
     return device
 
 
-async def runner_connect_sesame(ble_uuids: list = None) -> Dict[str, CHDevices]:
-    if ble_uuids is None:
+async def runner_connect_sesame(
+    target_ble_uuid: Optional[str] = None,
+) -> Dict[str, Sesame2Device]:
+    if target_ble_uuid is None:
         target_devices = config["sesame"]
     else:
-        if ble_uuids not in config["sesame"]:
+        if target_ble_uuid not in config["sesame"]:
             raise ValueError("Unknown BLE UUID.")
         else:
-            target_devices = {ble_uuids: config["sesame"][ble_uuids]}
+            target_devices = {target_ble_uuid: config["sesame"][target_ble_uuid]}
 
     pending_tasks = set()
     for ble_uuid, sesame_config in target_devices.items():
@@ -80,10 +92,7 @@ async def runner_connect_sesame(ble_uuids: list = None) -> Dict[str, CHDevices]:
             else:
                 device = task.result()
                 ble_uuid = device.getAdvertisement().getAddress()
-                connected_devices[device.deviceId] = {
-                    "device_obj": device,
-                    "ble_uuid": ble_uuid,
-                }
+                connected_devices[device.deviceId] = Sesame2Device(device, ble_uuid)
                 logger.info(
                     "Connected: BLE UUID = {}, SESAME UUID = {}".format(
                         ble_uuid, device.deviceId
@@ -113,7 +122,7 @@ def onSesameStateChanged(device: CHDevices) -> None:
         mqtt_client.publish(topic, payload=payload, qos=1, retain=True)
 
 
-def onMQTTMessage(client, userdata, msg: bytes) -> None:
+def onMQTTMessage(client, userdata, msg: MQTTMessage) -> None:
     global cmd_queue
 
     logger.info(
@@ -122,7 +131,7 @@ def onMQTTMessage(client, userdata, msg: bytes) -> None:
     uuid = msg.topic.split("/")[1]
     cmd = msg.payload.decode("utf-8")
 
-    if cmd == "LOCK" or cmd == "UNLOCK":
+    if cmd_queue and (cmd == "LOCK" or cmd == "UNLOCK"):
         cmd_queue.put_nowait((uuid, cmd))
 
 
@@ -148,12 +157,9 @@ async def runner():
     mqtt_client.publish(lwt_topic, payload="online", qos=1, retain=True)
 
     while True:
-        for sesame_uuid, device in connected_devices.items():
-            if (
-                device["device_obj"].getDeviceStatus().value
-                == CHDeviceLoginStatus.UnLogin
-            ):
-                ble_uuid = device["ble_uuid"]
+        for sesame_uuid, sesame_device in connected_devices.items():
+            if sesame_device.device.getDeviceStatus().value == CHDeviceLoginStatus.UnLogin:  # type: ignore
+                ble_uuid = sesame_device.ble_uuid
                 logger.error(
                     "Found disconnected device, retry: BLE UUID = {}, SESAME UUID = {}".format(
                         ble_uuid, sesame_uuid
@@ -164,15 +170,16 @@ async def runner():
 
         try:
             sesame_uuid, command = await asyncio.wait_for(cmd_queue.get(), timeout=1.0)
-            if sesame_uuid in connected_devices:
+            sesame_device = connected_devices.get(sesame_uuid)
+            if sesame_device is not None:
                 if command == "LOCK":
                     logger.info("Execute locking: SESAME UUID = {}".format(sesame_uuid))
-                    await connected_devices[sesame_uuid]["device_obj"].lock()
+                    await sesame_device.device.lock()
                 elif command == "UNLOCK":
                     logger.info(
                         "Execute unlocking: SESAME UUID = {}".format(sesame_uuid)
                     )
-                    await connected_devices[sesame_uuid]["device_obj"].unlock()
+                    await sesame_device.device.unlock()
         except asyncio.TimeoutError:
             pass
 
