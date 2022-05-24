@@ -37,7 +37,7 @@ jobs:
           timezoneMacos: "Asia/Tokyo"
           timezoneWindows: "Tokyo Standard Time"
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-versions }}
@@ -71,7 +71,7 @@ jobs:
           timezoneMacos: "Asia/Tokyo"
           timezoneWindows: "Tokyo Standard Time"
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
