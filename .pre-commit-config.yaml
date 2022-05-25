@@ -35,6 +35,5 @@ repos:
   rev: v0.950
   hooks:
   - id: mypy
-    files: pysesameos2
     args: ["--ignore-missing-imports", "--pretty"]
     additional_dependencies: ['cryptography', 'types-PyYAML']
