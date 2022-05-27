@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import inspect
 import logging
-from typing import TYPE_CHECKING, Dict, Tuple, TypedDict, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, TypedDict, Union
 
 import paho.mqtt.client as mqtt
 import yaml
@@ -21,16 +21,35 @@ logging.basicConfig()
 logging.getLogger("bleak").setLevel(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-mqtt_client = mqtt.Client()
-with open("config.yml", "r") as yml:
-    config = yaml.safe_load(yml)
-cmd_queue: asyncio.Queue[Tuple[str, str]] = asyncio.Queue()
-connected_devices = None
-
 
 class DiscoveredSesameDevices(TypedDict):
     device_obj: Union[CHSesame2, CHSesameBot]
     ble_uuid: str
+
+
+class SesameDeviceConfig(TypedDict):
+    secret_key: str
+    public_key: str
+
+
+class MqttServerConfig(TypedDict):
+    host: str
+    port: int
+    username: str
+    password: str
+    topic_prefix: str
+
+
+class Config(TypedDict):
+    sesame: dict[str, SesameDeviceConfig]
+    mqtt: MqttServerConfig
+
+
+mqtt_client = mqtt.Client()
+with open("config.yml", "r") as yml:
+    config: Config = yaml.safe_load(yml)
+cmd_queue: asyncio.Queue[Tuple[str, str]] = asyncio.Queue()
+connected_devices = None
 
 
 async def connect_sesame(
@@ -64,21 +83,23 @@ async def connect_sesame(
 
 
 async def runner_connect_sesame(
-    ble_uuids: list = None,
+    target_ble_uuid: Optional[str] = None,
 ) -> Dict[str, DiscoveredSesameDevices]:
-    if ble_uuids is None:
+    if target_ble_uuid is None:
         target_devices = config["sesame"]
     else:
-        if ble_uuids not in config["sesame"]:
+        if target_ble_uuid not in config["sesame"]:
             raise ValueError("Unknown BLE UUID.")
         else:
-            target_devices = {ble_uuids: config["sesame"][ble_uuids]}
+            target_devices = {target_ble_uuid: config["sesame"][target_ble_uuid]}
 
     pending_tasks = set()
-    for ble_uuid, sesame_config in target_devices.items():
-        logger.debug("Connect to the Sesame device: BLE UUID = {}".format(ble_uuid))
+    for target_ble_uuid, sesame_config in target_devices.items():
+        logger.debug(
+            "Connect to the Sesame device: BLE UUID = {}".format(target_ble_uuid)
+        )
         pending_tasks.add(
-            asyncio.create_task(connect_sesame(ble_uuid, **sesame_config))
+            asyncio.create_task(connect_sesame(target_ble_uuid, **sesame_config))
         )
 
     connected_devices: Dict[str, DiscoveredSesameDevices] = {}
