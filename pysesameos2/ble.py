@@ -2,7 +2,7 @@ import asyncio
 import base64
 import logging
 import uuid
-from typing import Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
@@ -16,8 +16,11 @@ from pysesameos2.const import (
     BleOpCode,
     BlePacketType,
 )
-from pysesameos2.device import CHDevices
 from pysesameos2.helper import CHProductModel
+
+if TYPE_CHECKING:
+    from pysesameos2.chsesame2 import CHSesame2
+    from pysesameos2.chsesamebot import CHSesameBot
 
 logger = logging.getLogger(__name__)
 
@@ -331,14 +334,14 @@ class BLEAdvertisement:
 
 
 class CHBleManager:
-    def device_factory(self, dev: BLEDevice) -> CHDevices:
+    def device_factory(self, dev: BLEDevice) -> Union["CHSesame2", "CHSesameBot"]:
         """Return a device object corresponding to a BLE advertisement.
 
         Args:
             dev (BLEDevice): The discovered BLE device.
 
         Returns:
-            CHDevices: The candyhouse device.
+            Union[CHSesame2, CHSesameBot]: The candyhouse device.
         """
         if not isinstance(dev, BLEDevice):
             raise TypeError("Invalid dev")
@@ -364,14 +367,16 @@ class CHBleManager:
         else:
             raise ValueError("Failed to find the service uuid")
 
-    async def scan(self, scan_duration: int = 10) -> Dict[str, CHDevices]:
+    async def scan(
+        self, scan_duration: int = 10
+    ) -> Dict[str, Union["CHSesame2", "CHSesameBot"]]:
         """Scan devices.
 
         Args:
             scan_duration (int): Keeping the scaninng time (Unit: second).
 
         Returns:
-            Dict[str, CHDevices]: Devices discovered.
+            Dict[str, Union[CHSesame2, CHSesameBot]]: Devices discovered.
         """
         logger.info("Starting scan for SESAME devices...")
         ret = {}
@@ -398,7 +403,7 @@ class CHBleManager:
 
     async def scan_by_address(
         self, ble_device_identifier: str, scan_duration: int = 10
-    ) -> CHDevices:
+    ) -> Union["CHSesame2", "CHSesameBot"]:
         """Scan a device by its Bluetooth/UUID address.
 
         Args:
@@ -406,7 +411,7 @@ class CHBleManager:
             scan_duration (int): Keeping the scaninng time (Unit: second).
 
         Returns:
-            CHDevices: Devices discovered.
+            Union[CHSesame2, CHSesameBot]: Devices discovered.
         """
         logger.info(
             "Starting scan for the SESAME device ({})...".format(ble_device_identifier)
