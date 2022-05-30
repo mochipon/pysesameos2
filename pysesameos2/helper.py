@@ -1,4 +1,5 @@
 import importlib
+import logging
 import sys
 from enum import Enum
 from typing import Generator, Union
@@ -7,6 +8,8 @@ if sys.version_info[:2] >= (3, 8):  # pragma: no cover
     from typing import TypedDict
 else:  # pragma: no cover
     from typing_extensions import TypedDict
+
+logger = logging.getLogger(__name__)
 
 
 class ProductData(TypedDict):
@@ -182,7 +185,7 @@ class CHSesame2MechStatus(CHSesameProtocolMechStatus):
         self._position = int.from_bytes(data[4:6], "little", signed=True)
         self._retcode = data[6]
 
-    def getBatteryPrecentage(self) -> int:
+    def getBatteryPercentage(self) -> int:
         """Return battery status information as a percentage.
 
         Returns:
@@ -212,8 +215,19 @@ class CHSesame2MechStatus(CHSesameProtocolMechStatus):
 
             return ret
 
+    def getBatteryPrecentage(self) -> int:
+        """Return battery status information as a percentage.
+        The method name contains typo, kept for backward compatibility.
+        Returns:
+            int: Battery power left as a percentage.
+        """
+        logger.error(
+            'This "getBatteryPrecentage" method is duplecated. Please use "getBatteryPercentage" instead.'
+        )
+        return self.getBatteryPercentage()
+
     def __str__(self) -> str:
-        return f"CHSesame2MechStatus(Battery={self.getBatteryPrecentage()}% ({self.getBatteryVoltage():.2f}V), isInLockRange={self.isInLockRange()}, isInUnlockRange={self.isInUnlockRange()}, Position={self.getPosition()})"
+        return f"CHSesame2MechStatus(Battery={self.getBatteryPercentage()}% ({self.getBatteryVoltage():.2f}V), isInLockRange={self.isInLockRange()}, isInUnlockRange={self.isInUnlockRange()}, Position={self.getPosition()})"
 
 
 class CHSesameBotMechStatus(CHSesameProtocolMechStatus):
@@ -234,7 +248,7 @@ class CHSesameBotMechStatus(CHSesameProtocolMechStatus):
         self._batteryVoltage = int.from_bytes(data[0:2], "little") * 3.6 / 1023
         self._motorStatus = data[4]
 
-    def getBatteryPrecentage(self) -> int:
+    def getBatteryPercentage(self) -> int:
         """Return battery status information as a percentage.
 
         Returns:
@@ -264,11 +278,22 @@ class CHSesameBotMechStatus(CHSesameProtocolMechStatus):
 
             return ret
 
+    def getBatteryPrecentage(self) -> int:
+        """Return battery status information as a percentage.
+        The method name contains typo, kept for backward compatibility.
+        Returns:
+            int: Battery power left as a percentage.
+        """
+        logger.error(
+            'This "getBatteryPrecentage" method is duplecated. Please use "getBatteryPercentage" instead.'
+        )
+        return self.getBatteryPercentage()
+
     def getMotorStatus(self) -> int:
         return self._motorStatus
 
     def __str__(self) -> str:
-        return f"CHSesameBotMechStatus(Battery={self.getBatteryPrecentage()}% ({self.getBatteryVoltage():.2f}V), motorStatus={self.getMotorStatus()})"
+        return f"CHSesameBotMechStatus(Battery={self.getBatteryPercentage()}% ({self.getBatteryVoltage():.2f}V), motorStatus={self.getMotorStatus()})"
 
 
 class CHSesame2MechSettings:
