@@ -97,7 +97,7 @@ class TestCHSesame2MechStatus:
     def test_CHSesame2MechStatus_rawdata_locked(self):
         status = CHSesame2MechStatus(rawdata="60030080f3ff0002")
 
-        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryPercentage() == 100.0
         assert status.getBatteryVoltage() == 6.0809384164222875
         assert status.getPosition() == -13
         assert status.getRetCode() == 0
@@ -118,7 +118,7 @@ class TestCHSesame2MechStatus:
     def test_CHSesame2MechStatus_rawdata_unlocked(self):
         status = CHSesame2MechStatus(rawdata="5c030503e3020004")
 
-        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryPercentage() == 100.0
         assert status.getBatteryVoltage() == 6.052785923753666
         assert status.getPosition() == 739
         assert status.getRetCode() == 0
@@ -132,11 +132,17 @@ class TestCHSesame2MechStatus:
 
     def test_CHSesame2MechStatus_rawdata_lowpower(self):
         status = CHSesame2MechStatus(rawdata="30030080f3ff0002")
-        assert status.getBatteryPrecentage() == 44
+        assert status.getBatteryPercentage() == 44
         assert status.getBatteryVoltage() == 5.743108504398827
 
         status2 = CHSesame2MechStatus(rawdata="48020080f3ff0002")
-        assert status2.getBatteryPrecentage() == 0
+        assert status2.getBatteryPercentage() == 0
+
+    def test_CHSesame2MechStatus_getBatteryPrecentage_provides_backward_compatibility(
+        self,
+    ):
+        status = CHSesame2MechStatus(rawdata="30030080f3ff0002")
+        assert status.getBatteryPrecentage() == status.getBatteryPercentage()
 
 
 class TestCHSesame2MechSettings:
@@ -174,7 +180,7 @@ class TestCHSesameBotMechStatus:
     def test_CHSesameBotMechStatus_rawdata_locked(self):
         status = CHSesameBotMechStatus(rawdata="5503000000000102")
 
-        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryPercentage() == 100.0
         assert status.getBatteryVoltage() == 3.001759530791789
         assert status.isInLockRange()
         assert not status.isInUnlockRange()
@@ -191,7 +197,7 @@ class TestCHSesameBotMechStatus:
     def test_CHSesameBotMechStatus_rawdata_unlocked(self):
         status = CHSesameBotMechStatus(rawdata="5503000000000104")
 
-        assert status.getBatteryPrecentage() == 100.0
+        assert status.getBatteryPercentage() == 100.0
         assert status.getBatteryVoltage() == 3.001759530791789
         assert not status.isInLockRange()
         assert status.isInUnlockRange()
@@ -202,11 +208,18 @@ class TestCHSesameBotMechStatus:
 
     def test_CHSesameBotMechStatus_rawdata_lowpower(self):
         status = CHSesameBotMechStatus(rawdata="3003000000000102")
-        assert status.getBatteryPrecentage() == 44
+        assert status.getBatteryPercentage() == 44
         assert status.getBatteryVoltage() == 2.8715542521994135
 
         status2 = CHSesameBotMechStatus(rawdata="4802000000000102")
-        assert status2.getBatteryPrecentage() == 0
+        assert status2.getBatteryPercentage() == 0
+
+    def test_CHSesameBotMechStatus_getBatteryPrecentage_provides_backward_compatibility(
+        self,
+    ):
+        status = CHSesameBotMechStatus(rawdata="3003000000000102")
+
+        assert status.getBatteryPrecentage() == status.getBatteryPercentage()
 
 
 class TestCHSesameBotMechSettings:
