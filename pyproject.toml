@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "pysesameos2"
-version = "0.0.4"
+version = "0.0.5"
 homepage = "https://github.com/mochipon/pysesameos2"
 description = "Unofficial library to control smart devices running Sesame OS2."
 authors = ["Masaki Tagawa <masaki@tagawa.email>"]
