@@ -174,7 +174,7 @@ class CHSesameBot(CHSesameLock):
         Args:
             callback (Optional[Callable[[CHSesameBot], None]]): The callback to be called on device status changing.
         """
-        pass
+        super().setDeviceStatusCallback(callback)
 
     async def connect(self) -> None:
         adv = self.getAdvertisement()
