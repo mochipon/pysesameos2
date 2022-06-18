@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union
 
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
@@ -80,6 +80,9 @@ class CHDeviceKey:
         if len(key) != 64:
             raise ValueError("Invalid Sesame2PublicKey - length should be 64.")
         self._sesame2PublicKey = key
+
+
+CHD = TypeVar("CHD", bound="CHDevices")
 
 
 class CHDevices:
@@ -264,7 +267,7 @@ class CHDevices:
             self.setDeviceStatus(CHSesame2Status.ReceivedBle)
 
     def setDeviceStatusCallback(
-        self, callback: Optional[Callable[["CHDevices"], None]]
+        self, callback: Optional[Callable[[CHD], None]]
     ) -> None:
         """Set a device status callback.
 
