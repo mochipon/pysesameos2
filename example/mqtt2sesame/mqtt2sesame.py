@@ -177,7 +177,7 @@ def onMQTTMessage(client, userdata, msg: MQTTMessage) -> None:
 
     if not isinstance(uuid, str):
         raise TypeError("Failed to parse the device uuid from topic")
-    if cmd not in ["LOCK, UNLOCK"]:
+    if cmd not in ["LOCK", "UNLOCK"]:
         raise TypeError("Failed to parse command: {}".format(cmd))
 
     if cmd == "LOCK" or cmd == "UNLOCK":
