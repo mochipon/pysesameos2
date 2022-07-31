@@ -187,6 +187,8 @@ def onMQTTMessage(client, userdata, msg: MQTTMessage) -> None:
 async def runner():
     global mqtt_client, config, cmd_queue, connected_devices
 
+    cmd_queue = asyncio.Queue()
+
     lwt_topic = "{}/LWT".format(config["mqtt"]["topic_prefix"])
     mqtt_client.will_set(lwt_topic, payload="offline", qos=1, retain=True)
     mqtt_client.on_message = onMQTTMessage
