@@ -166,16 +166,6 @@ class CHSesame2(CHSesameLock):
         logger.debug(f"setIntention: {intent}")
         self._intention = intent
 
-    def setDeviceStatusCallback(
-        self, callback: Optional[Callable[["CHSesame2"], None]]
-    ) -> None:
-        """Set a device status callback.
-
-        Args:
-            callback (Optional[Callable[[CHSesame2], None]]): The callback to be called on device status changing.
-        """
-        super().setDeviceStatusCallback(callback)
-
     async def connect(self) -> None:
         adv = self.getAdvertisement()
         if not adv:
