@@ -177,7 +177,7 @@ def onMQTTMessage(client, userdata, msg: MQTTMessage) -> None:
 
     if not isinstance(uuid, str):
         raise TypeError("Failed to parse the device uuid from topic")
-    if cmd not in ["LOCK, UNLOCK"]:
+    if cmd not in ["LOCK", "UNLOCK"]:
         raise TypeError("Failed to parse command: {}".format(cmd))
 
     if cmd == "LOCK" or cmd == "UNLOCK":
@@ -186,6 +186,8 @@ def onMQTTMessage(client, userdata, msg: MQTTMessage) -> None:
 
 async def runner():
     global mqtt_client, config, cmd_queue, connected_devices
+
+    cmd_queue = asyncio.Queue()
 
     lwt_topic = "{}/LWT".format(config["mqtt"]["topic_prefix"])
     mqtt_client.will_set(lwt_topic, payload="offline", qos=1, retain=True)
