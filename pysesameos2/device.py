@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union
 
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
@@ -82,6 +82,9 @@ class CHDeviceKey:
         self._sesame2PublicKey = key
 
 
+CHD = TypeVar("CHD", bound="CHDevices")
+
+
 class CHDevices:
     def __init__(self) -> None:
         """Generic Implementation for Candyhouse products."""
@@ -90,7 +93,7 @@ class CHDevices:
         self._registered: bool = False
         self._rssi: int = -100
         self._deviceStatus: CHSesame2Status = CHSesame2Status.NoBleSignal  # type: ignore
-        self._deviceStatus_callback: Optional[Callable[[CHDevices], None]] = None
+        self._deviceStatus_callback: Optional[Callable[[CHD], None]] = None
         self._advertisement: Optional[BLEAdvertisement] = None
         self._key: CHDeviceKey = CHDeviceKey()
         self._login_event = asyncio.Event()
@@ -264,7 +267,7 @@ class CHDevices:
             self.setDeviceStatus(CHSesame2Status.ReceivedBle)
 
     def setDeviceStatusCallback(
-        self, callback: Optional[Callable[["CHDevices"], None]]
+        self, callback: Optional[Callable[[CHD], None]]
     ) -> None:
         """Set a device status callback.
 
