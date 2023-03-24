@@ -27,7 +27,7 @@ packages = [
 python = ">=3.7,<4.0"
 
 bleak = "^0.14.3"
-cryptography = "^37.0.2"
+cryptography = "^40.0.0"
 
 typing-extensions = { version = "^4.2.0", python = "<3.8" }
 importlib-metadata = {version = "^4.11.4", python = "<3.8"}
