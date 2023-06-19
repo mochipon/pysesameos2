@@ -31,7 +31,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: szenius/set-timezone@v1.0
+      - uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: "Asia/Tokyo"
           timezoneMacos: "Asia/Tokyo"
@@ -65,7 +65,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: szenius/set-timezone@v1.0
+      - uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: "Asia/Tokyo"
           timezoneMacos: "Asia/Tokyo"
