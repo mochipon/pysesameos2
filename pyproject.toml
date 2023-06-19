@@ -40,7 +40,7 @@ mkdocstrings = { version = "^0.19.0", optional = true }
 mkdocstrings-python = { version = "^0.7.0", optional = true }
 mkdocs-autorefs = { version = "^0.4.1", optional = true }
 mkdocs-include-markdown-plugin = { version = "^3.5.1", optional = true }
-mkdocs-material = { version = "^8.2.15", optional = true }
+mkdocs-material = { version = "^9.0.0", optional = true }
 aenum = "^3.1.11"
 
 [tool.poetry.dev-dependencies]
