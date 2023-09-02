@@ -26,7 +26,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 
-bleak = "^0.14.3"
+bleak = "^0.21.0"
 cryptography = "^37.0.2"
 
 typing-extensions = { version = "^4.2.0", python = "<3.8" }
