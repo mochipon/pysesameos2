@@ -7,6 +7,7 @@ import uuid
 
 import pytest
 from bleak.backends.device import BLEDevice
+from bleak.backends.scanner import AdvertisementData
 from bleak.exc import BleakError
 
 from pysesameos2.ble import (
@@ -197,9 +198,10 @@ class TestBLEAdvertisement:
                 "0000fd81-0000-1000-8000-00805f9b34fb",
             ],
             rssi=-60,
+            details=None,
             manufacturer_data={1370: b"\x00\x00\x01"},
         )
-        b = BLEAdvertisement(dev=d, manufacturer_data={1370: b"\x00\x00\x01"})
+        b = BLEAdvertisement(dev=d, manufacturer_data={1370: b"\x00\x00\x01"}, rssi=-60)
 
         assert b.getAddress() == "AA:BB:CC:11:22:33"
         assert b.getDevice() == d
@@ -226,11 +228,21 @@ class TestCHBleManager:
                 "0000fd81-0000-1000-8000-00805f9b34fb",
             ],
             rssi=-60,
+            details=None,
             manufacturer_data={1370: b"\xff\x00\x01"},
+        )
+        adv = AdvertisementData(
+            None,
+            {1370: b"\xff\x00\x01"},
+            {},
+            ["0000fd81-0000-1000-8000-00805f9b34fb"],
+            None,
+            -60,
+            (),
         )
 
         with pytest.raises(NotImplementedError):
-            assert CHBleManager().device_factory(bled)
+            assert CHBleManager().device_factory(bled, adv)
 
     def test_CHBleManager_device_factory(self):
         bled = BLEDevice(
@@ -240,36 +252,70 @@ class TestCHBleManager:
                 "0000fd81-0000-1000-8000-00805f9b34fb",
             ],
             rssi=-60,
+            details=None,
             manufacturer_data={1370: b"\x00\x00\x01"},
         )
+        adv = AdvertisementData(
+            None,
+            {1370: b"\x00\x00\x01"},
+            {},
+            ["0000fd81-0000-1000-8000-00805f9b34fb"],
+            None,
+            -60,
+            (),
+        )
 
-        d = CHBleManager().device_factory(bled)
+        d = CHBleManager().device_factory(bled, adv)
         assert isinstance(d, CHSesame2)
 
     @pytest.mark.asyncio
     async def test_CHBleManager_scan_returns_None(self, bleak_scanner):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return [
-                BLEDevice(
-                    "AA:BB:CC:11:22:33",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\xff\x00\x01"},
+            return {
+                "AA:BB:CC:11:22:33": (
+                    BLEDevice(
+                        "AA:BB:CC:11:22:33",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\xff\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\xff\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:44:55:66",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "ffffffff-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
+                "AA:BB:CC:44:55:66": (
+                    BLEDevice(
+                        "AA:BB:CC:44:55:66",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "ffffffff-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["ffffffff-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-            ]
+            }
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -293,26 +339,50 @@ class TestCHBleManager:
     async def test_CHBleManager_scan(self, bleak_scanner):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return [
-                BLEDevice(
-                    "AA:BB:CC:11:22:33",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
+            return {
+                "AA:BB:CC:11:22:33": (
+                    BLEDevice(
+                        "AA:BB:CC:11:22:33",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:44:55:66",
-                    "Em09ZpIiTlq83gxmKdSNQw",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-70,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
+                "AA:BB:CC:44:55:66": (
+                    BLEDevice(
+                        "AA:BB:CC:44:55:66",
+                        "Em09ZpIiTlq83gxmKdSNQw",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-70,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-            ]
+            }
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -330,7 +400,7 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return []
+            return {}
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -345,49 +415,109 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return [
-                BLEDevice(
-                    "AA:BB:CC:11:22:33",
-                    "INVALID_NAME",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
+            return {
+                "AA:BB:CC:11:22:33": (
+                    BLEDevice(
+                        "AA:BB:CC:11:22:33",
+                        "INVALID_NAME",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:44:55:66",
-                    None,
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
+                "AA:BB:CC:44:55:66": (
+                    BLEDevice(
+                        "AA:BB:CC:44:55:66",
+                        None,
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:77:88:99",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
+                "AA:BB:CC:77:88:99": (
+                    BLEDevice(
+                        "AA:BB:CC:77:88:99",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                    ),
+                    AdvertisementData(
+                        None,
+                        None,
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:AA:BB:CC",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x02\x00\x01"},
+                "AA:BB:CC:AA:BB:CC": (
+                    BLEDevice(
+                        "AA:BB:CC:AA:BB:CC",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x02\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x02\x00\x01"},
+                        {},
+                        ["00000000-0000-0000-0000-000000000000"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-                BLEDevice(
-                    "AA:BB:CC:DD:EE:FF",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "ffffffff-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x02\x00\x01"},
+                "AA:BB:CC:DD:EE:FF": (
+                    BLEDevice(
+                        "AA:BB:CC:DD:EE:FF",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "ffffffff-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x02\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x02\x00\x01"},
+                        {},
+                        ["ffffffff-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 ),
-            ]
+            }
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -414,17 +544,29 @@ class TestCHBleManager:
     ):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return [
-                BLEDevice(
-                    "AA:BB:CC:11:22:33",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\xff\x00\x01"},
+            return {
+                "AA:BB:CC:11:22:33": (
+                    BLEDevice(
+                        "AA:BB:CC:11:22:33",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\xff\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\xff\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
                 )
-            ]
+            }
 
         bleak_scanner.discover.side_effect = _scan
 
@@ -437,17 +579,29 @@ class TestCHBleManager:
     async def test_CHBleManager_scan_by_address(self, bleak_scanner):
         async def _scan(*args, **kwargs):
             """Simulate a scanning response"""
-            return [
-                BLEDevice(
-                    "AA:BB:CC:11:22:33",
-                    "QpGK0YFUSv+9H/DN6IqN4Q",
-                    uuids=[
-                        "0000fd81-0000-1000-8000-00805f9b34fb",
-                    ],
-                    rssi=-60,
-                    manufacturer_data={1370: b"\x00\x00\x01"},
-                )
-            ]
+            return {
+                "AA:BB:CC:11:22:33": (
+                    BLEDevice(
+                        "AA:BB:CC:11:22:33",
+                        "QpGK0YFUSv+9H/DN6IqN4Q",
+                        uuids=[
+                            "0000fd81-0000-1000-8000-00805f9b34fb",
+                        ],
+                        rssi=-60,
+                        details=None,
+                        manufacturer_data={1370: b"\x00\x00\x01"},
+                    ),
+                    AdvertisementData(
+                        None,
+                        {1370: b"\x00\x00\x01"},
+                        {},
+                        ["0000fd81-0000-1000-8000-00805f9b34fb"],
+                        None,
+                        -60,
+                        (),
+                    ),
+                ),
+            }
 
         bleak_scanner.discover.side_effect = _scan
 
