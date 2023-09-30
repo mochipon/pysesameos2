@@ -181,7 +181,7 @@ class CHSesame2(CHSesameLock):
 
         logger.info(f"Connected to the device: {self.getDeviceUUID()}")
         self.setDeviceStatus(CHSesame2Status.WaitingGatt)
-        services = await self._client.get_services()
+        services = await self._client.services
         for s in services:
             if s.uuid == SERVICE_UUID:
                 self.setCharacteristicTX(s.get_characteristic(TX_UUID))

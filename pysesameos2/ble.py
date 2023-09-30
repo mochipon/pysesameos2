@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
+from bleak.backends.scanner import AdvertisementData
 from bleak.exc import BleakError
 
 from pysesameos2.const import (
@@ -291,7 +292,7 @@ class CHSesame2BleResponse:
 
 
 class BLEAdvertisement:
-    def __init__(self, dev: BLEDevice, manufacturer_data: dict) -> None:
+    def __init__(self, dev: BLEDevice, manufacturer_data: dict, rssi: int) -> None:
         if not isinstance(dev, BLEDevice):
             raise TypeError("Invalid dev")
         if not isinstance(manufacturer_data, dict):
@@ -299,7 +300,7 @@ class BLEAdvertisement:
 
         self._address = dev.address
         self._device = dev
-        self._rssi = dev.rssi
+        self._rssi = rssi
 
         self._advBytes = next(iter(manufacturer_data.values()))
         self._productModel = CHProductModel.getByValue(self._advBytes[0])
@@ -334,32 +335,31 @@ class BLEAdvertisement:
 
 
 class CHBleManager:
-    def device_factory(self, dev: BLEDevice) -> Union["CHSesame2", "CHSesameBot"]:
-        """Return a device object corresponding to a BLE advertisement.
+    def device_factory(
+        self, dev: BLEDevice, adv_data: AdvertisementData
+    ) -> Union["CHSesame2", "CHSesameBot"]:
+        """Return a device object corresponding to a BLEDevice and AdvertisementData.
 
         Args:
             dev (BLEDevice): The discovered BLE device.
+            adv_data (AdvertisementData): break's AdvertisementData when discovered.
 
         Returns:
             Union[CHSesame2, CHSesameBot]: The candyhouse device.
         """
-        if not isinstance(dev, BLEDevice):
+        if not isinstance(dev, BLEDevice) and not isinstance(
+            adv_data, AdvertisementData
+        ):
             raise TypeError("Invalid dev")
 
         if dev.name is None:
             raise ValueError("Failed to find the device name")
 
-        # `BLEDevice.metadata` should return device specific details in OS-agnostically way.
-        # https://bleak.readthedocs.io/en/latest/api.html#bleak.backends.device.BLEDevice.metadata
-        if (
-            dev.metadata is None
-            or "uuids" not in dev.metadata
-            or "manufacturer_data" not in dev.metadata
-        ):
-            raise ValueError("Failed to find the device metadata")
+        if adv_data.service_uuids is None or adv_data.manufacturer_data is None:
+            raise ValueError("Failed to find the uuid/manufacture data")
 
-        if SERVICE_UUID in dev.metadata["uuids"]:
-            adv = BLEAdvertisement(dev, dev.metadata["manufacturer_data"])
+        if SERVICE_UUID in adv_data.service_uuids:
+            adv = BLEAdvertisement(dev, adv_data.manufacturer_data, adv_data.rssi)
             device = adv.getProductModel().deviceFactory()()
             device.setAdvertisement(adv)
 
@@ -381,11 +381,15 @@ class CHBleManager:
         logger.info("Starting scan for SESAME devices...")
         ret = {}
         try:
-            devices = await asyncio.wait_for(BleakScanner.discover(), scan_duration)
+            discovers = await asyncio.wait_for(
+                BleakScanner.discover(return_adv=True), scan_duration
+            )
 
-            for device in devices:
+            for discover in discovers.values():
+                device = discover[0]
+                adv_data = discover[1]
                 try:
-                    obj = self.device_factory(device)
+                    obj = self.device_factory(device, adv_data)
                 except NotImplementedError:
                     logger.warning("Unsupported SESAME device is found, skip.")
                     continue
@@ -421,30 +425,29 @@ class CHBleManager:
         # `BleakScanner.find_device_by_address`.
         #
         # The problem is, the reposence (`BLEDevice`) of `find_device_by_address` does not
-        # contain a proper `matadata` which is heavily utilized in `device_factory`.
-        #
-        # `discover` internally calls `discovered_devices` which provides
-        # OS-agnostic `metadata` of the device.
-        # https://github.com/hbldh/bleak/blob/55a2d34cc96bb842be278485794806704caa2d2c/bleak/backends/scanner.py#L101
-        # https://github.com/hbldh/bleak/blob/ce63ed4d92430f154ce33ab812e313961b26f7a4/bleak/backends/bluezdbus/scanner.py#L213-L237
+        # provide the advertisement data. So we cannot identify the device model etc.
 
-        devices = await asyncio.wait_for(BleakScanner.discover(), scan_duration)
+        discovers = await asyncio.wait_for(
+            BleakScanner.discover(return_adv=True), scan_duration
+        )
 
-        device = next(
-            (d for d in devices if d.address.lower() == ble_device_identifier.lower()),
+        discovered = next(
+            (
+                d
+                for d in discovers.values()
+                if d[0].address.lower() == ble_device_identifier.lower()
+            ),
             None,
         )
-        if device is None:
+        if discovered is None:
             raise ConnectionRefusedError("Scan completed: the device not found")
 
         try:
-            obj = self.device_factory(device)
+            obj = self.device_factory(discovered[0], discovered[1])
         except NotImplementedError:
             raise NotImplementedError("This device is not supported.")
         except ValueError:
             raise ValueError("This is not a SESAME device.")
-
-        obj = self.device_factory(device)
 
         logger.info("Scan completed: found the device")
         return obj

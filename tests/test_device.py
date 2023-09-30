@@ -26,10 +26,11 @@ def ble_advertisement():
             "0000fd81-0000-1000-8000-00805f9b34fb",
         ],
         rssi=-60,
+        details=None,
         manufacturer_data={1370: b"\x00\x00\x01"},
     )
     ble_advertisement = BLEAdvertisement(
-        dev=bledevice, manufacturer_data={1370: b"\x00\x00\x01"}
+        dev=bledevice, manufacturer_data={1370: b"\x00\x00\x01"}, rssi=-60
     )
     return ble_advertisement
 
@@ -43,10 +44,11 @@ def ble_advertisement_not_registed_device():
             "0000fd81-0000-1000-8000-00805f9b34fb",
         ],
         rssi=-60,
+        details=None,
         manufacturer_data={1370: b"\x00\x00\x00"},
     )
     ble_advertisement = BLEAdvertisement(
-        dev=bledevice, manufacturer_data={1370: b"\x00\x00\x00"}
+        dev=bledevice, manufacturer_data={1370: b"\x00\x00\x00"}, rssi=-60
     )
     return ble_advertisement
 
